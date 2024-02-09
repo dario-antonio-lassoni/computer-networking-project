@@ -39,6 +39,17 @@ void print_table_list(struct table* list) {
 }
 
 
+void print_bookable_tables(struct table* list) {
+	struct table* curr = list;
+	int i = 1;
+	printf("Tavoli prenotabili per il timeslot selezionato:\n");
+	while(curr != NULL) {	
+		printf("%d) %s %s %s\n", i, curr->table, curr->room, curr->position);	
+		fflush(stdout);
+		curr = curr->next;
+		i++;
+	}
+}
 
 struct booking* load_booking_list() {
 	struct booking *list, *prec, *curr;

@@ -29,10 +29,11 @@ struct table {
 /* BOOKING */
 struct booking* load_booking_list();
 /* Ritorna la lista di prenotazioni che hanno il time slot indicato */
-void select_booking_by_timestamp(struct booking** booking_list, int year, int month, int day, int hour); 
+void select_booking_by_timestamp(struct booking** booking_list, int year, int month, int day, int hour);
 
 /* TABLE_MAP */
 void print_table_list(struct table* list);
+void print_bookable_tables(struct table* list);
 struct table* load_table_list();
 /* Ritorna i tavoli prenotabili */
 struct table* get_bookable_table(int year, int month, int day, int hour, int seats); 
