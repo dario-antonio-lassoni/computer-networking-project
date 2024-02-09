@@ -204,8 +204,9 @@ int main(int argc, char* argv[]) {
 
 								while(temp_table != NULL) {
 									LOG_INFO("INVIO LA TABLE");
-									//memset(buffer, 0, BUFFER_SIZE);	
-									sprintf(buffer, "%s %s %s", &temp_table->table, &temp_table->room, &temp_table->position);
+									//memset(buffer, 0, BUFFER_SIZE);
+								//	write_text_to_buffer(&temp_table->table);
+									sprintf(buffer, "%s %s %s", &temp_table->table[0], &temp_table->room[0], &temp_table->position[0]);
 								//	ret = send_data(i, (void*)buffer); 
 									ret = send(i, (void*)buffer, BUFFER_SIZE, 0); //BUFFER_SIZE
 									

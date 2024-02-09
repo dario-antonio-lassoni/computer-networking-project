@@ -37,12 +37,9 @@ struct cmd_struct* create_cmd_struct_find(char* request) {
 
 void write_text_to_buffer(void** buf, char* text) {
 	int len = strlen(text);
-	printf("strlen nella write text to buffer: %d\n", len);
 	*buf = (char*)malloc(sizeof(char) * len);
 	memset(*buf, 0, len);
-	printf("Ho fatto la malloc su buf\n");
 	strcpy(*buf, text);
-	printf("Strcpy\n");
 }
 
 int send_data(int sd, void* buf) {

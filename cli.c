@@ -179,7 +179,7 @@ int main(int argc, char* argv[]) {
 					/* Aggiunta del tavolo nella table_list */
 					temp_table = (struct table*)malloc(sizeof(struct table));
 					temp_table->next = NULL;
-					ret = sscanf(buffer, "%s %s %s", &temp_table->table, &temp_table->room, &temp_table->position);
+					ret = sscanf(buffer, "%s %s %s", &temp_table->table[0], &temp_table->room[0], &temp_table->position[0]);
 					add_to_table_list(&table_list, temp_table);
 						
 					printf("ho aggiunto un tavolo\n");
