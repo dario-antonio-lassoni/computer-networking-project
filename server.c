@@ -98,8 +98,8 @@ int main(int argc, char* argv[]) {
 				} else { /* Se viene rilevata una nuova richiesta da un client (tramite una send) */
 					/* Inserisco il comando ricevuto dal client nel buffer */
 					//memset(buffer, 0, BUFFER_SIZE);
-					ret = recv(i, (void*)buffer, BUFFER_SIZE, 0);
-					//ret = receive_data(i, (void*)&buffer);
+					//ret = recv(i, (void*)buffer, BUFFER_SIZE, 0);
+					ret = receive_data(i, (void*)&buffer);
 				
 					if(ret == 0) {
 
@@ -119,8 +119,8 @@ int main(int argc, char* argv[]) {
 						write_text_to_buffer((void*)&buffer, "START_RECOGNIZE");
 						//strcpy(buffer, "START_RECOGNIZE");
 					
-						//ret = send_data(i, buffer);
-						ret = send(i, (void*)buffer, strlen(buffer) + 1, 0); //BUFFER_SIZE
+						ret = send_data(i, buffer);
+						//ret = send(i, (void*)buffer, strlen(buffer) + 1, 0); //BUFFER_SIZE
 											      
 						if(ret < 0) {
 							LOG_ERROR("Errore in fase di riconoscimento del client! Chiudo la comunicazione. (STEP 1)");	
@@ -130,8 +130,8 @@ int main(int argc, char* argv[]) {
 							continue;
 						}
 
-						//ret = receive_data(i, (void*)&buffer);
-						ret = recv(i, (void*)buffer, strlen(buffer) + 1, 0);
+						ret = receive_data(i, (void*)&buffer);
+						//ret = recv(i, (void*)buffer, strlen(buffer) + 1, 0);
 						LOG_INFO("Ho ricevuto il client_device!");
 						printf("buffer ricevuto: %s\n", buffer);
 						fflush(stdout);
@@ -162,8 +162,8 @@ int main(int argc, char* argv[]) {
 						LOG_INFO("Invio ACK per segnalare la fine della fase di riconoscimento al client");
 						strcpy(buffer, "END_RECOGNIZE");
 						
-						ret = send(i, (void*)buffer, BUFFER_SIZE, 0); //BUFFER_SIZE
-						//ret = send_data(i, buffer);
+						//ret = send(i, (void*)buffer, BUFFER_SIZE, 0); //BUFFER_SIZE
+						ret = send_data(i, buffer);
 						if(ret < 0) {
 							LOG_ERROR("Errore in fase di riconoscimento del client! Chiudo la comunicazione. (STEP 4)");	
 							delete_client_device(&client_list, i);	
@@ -204,11 +204,9 @@ int main(int argc, char* argv[]) {
 
 								while(temp_table != NULL) {
 									LOG_INFO("INVIO LA TABLE");
-									//memset(buffer, 0, BUFFER_SIZE);
-								//	write_text_to_buffer(&temp_table->table);
 									sprintf(buffer, "%s %s %s", &temp_table->table[0], &temp_table->room[0], &temp_table->position[0]);
-								//	ret = send_data(i, (void*)buffer); 
-									ret = send(i, (void*)buffer, BUFFER_SIZE, 0); //BUFFER_SIZE
+									ret = send_data(i, (void*)buffer); 
+							//		ret = send(i, (void*)buffer, BUFFER_SIZE, 0); //BUFFER_SIZE
 									
 									if(ret < 0) {
 										LOG_ERROR("Errore durante l'invio dei tavoli prenotabili. Chiudo la comunicazione");
@@ -222,8 +220,8 @@ int main(int argc, char* argv[]) {
 									temp_table = temp_table->next;
 									if(temp_table == NULL) {
 										strcpy(buffer, "END_MSG\0");	
-										ret = send(i, (void*)buffer, BUFFER_SIZE, 0); //BUFFER_SIZE
-										//send_data(i, (void*)buffer);
+										//ret = send(i, (void*)buffer, BUFFER_SIZE, 0); //BUFFER_SIZE
+										send_data(i, (void*)buffer);
 										LOG_WARN("INVIO L'ULTIMO!");
 									}
 								}

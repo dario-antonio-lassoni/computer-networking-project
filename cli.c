@@ -71,8 +71,8 @@ int main(int argc, char* argv[]) {
 	
 	/* Invio della richiesta di riconoscimento verso il server */
 	write_text_to_buffer((void*)&request, "RECOGNIZE_ME");
-	ret = send(sd, request, strlen(request) + 1, 0);
-	//ret = send_data(sd, request);
+	//ret = send(sd, request, strlen(request) + 1, 0);
+	ret = send_data(sd, request);
 		
 	if(ret < 0) {
 		set_LOG_ERROR();
@@ -82,9 +82,9 @@ int main(int argc, char* argv[]) {
 
 	/* Attesa da parte del server dell'acquisizione della richiesta */
 	
-	//ret = receive_data(sd, (void*)&buffer);
+	ret = receive_data(sd, (void*)&buffer);
 	
-	ret = recv(sd, buffer, BUFFER_SIZE, 0);
+	//ret = recv(sd, buffer, BUFFER_SIZE, 0);
 
 	printf("Aspetto che ritorni la RECOGNIZE_ME dal server\n");
 	fflush(stdout);
@@ -106,8 +106,8 @@ int main(int argc, char* argv[]) {
 
 	/* Invio la tipologia del client al server per la fase di riconoscimento  */
 	sprintf(request, "%d %d", cli_dev.port, cli_dev.type);
-	ret = send(sd, request, strlen(request) + 1, 0);
-	//ret = send_data(sd, request);
+	//ret = send(sd, request, strlen(request) + 1, 0);
+	ret = send_data(sd, request);
 	LOG_INFO("Invio tipologia del client al server");
 	if(ret < 0) {
 		set_LOG_ERROR();
@@ -116,8 +116,8 @@ int main(int argc, char* argv[]) {
 	}
 
 	/* In attesa di ACK da parte del server per conferma di riconoscimento avvenuto */
-	//ret = receive_data(sd, (void*)&buffer);
-	ret = recv(sd, (void*)buffer, BUFFER_SIZE, 0);
+	ret = receive_data(sd, (void*)&buffer);
+	//ret = recv(sd, (void*)buffer, BUFFER_SIZE, 0);
 
 	if(strcmp("END_RECOGNIZE", buffer)) {
 		set_LOG_ERROR();
@@ -152,8 +152,8 @@ int main(int argc, char* argv[]) {
 				*((int*)command->args[1]), *((int*)command->args[2]), *((int*)command->args[3]), *((int*)command->args[4]), *((int*)command->args[5]));
 				
 				/* Invio del comando find */
-				ret = send(sd, request, strlen(request) + 1, 0);
-				//ret = send_data(sd, request);
+				//ret = send(sd, request, strlen(request) + 1, 0);
+				ret = send_data(sd, request);
 				if(ret < 0) {
 					perror("Errore in fase di invio comando: ");
 					exit(1);
@@ -164,8 +164,8 @@ int main(int argc, char* argv[]) {
 				for(;;) {
 					/* Attesa della response con i tavoli prenotabili */
 					
-					//ret = receive_data(sd, (void*)&buffer);
-					ret = recv(sd, (void*)buffer, BUFFER_SIZE, 0);
+					ret = receive_data(sd, (void*)&buffer);
+					//ret = recv(sd, (void*)buffer, BUFFER_SIZE, 0);
 
 					printf("buffer: %s\n", buffer);	
 					fflush(stdout);
