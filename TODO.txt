@@ -1,0 +1,2 @@
+- Fare i check sulla find (in particolare sui dati in input tipo le date, verificare che mese non sia >12 o <0, giorni>31 ecc...)
+- Fare in modo che i messaggi non abbiano una grandezza fissa, in particoalre per le struct che si inviano 
