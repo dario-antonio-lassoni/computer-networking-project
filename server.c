@@ -111,16 +111,14 @@ int main(int argc, char* argv[]) {
 					} else if (strcmp(buffer, "RECOGNIZE_ME") == 0) { /* Se il client si è appena collegato e chiede di essere riconosciuto */
 				
 						LOG_INFO("Riconoscimento nuovo client in corso...");	
-						// Invio conferma ricezione comando per l'inizio della fase di riconoscimento
 						
+						/* Invio conferma ricezione comando per l'inizio della fase di riconoscimento */
 						write_text_to_buffer((void*)&buffer, "START_RECOGNIZE");
-						//strcpy(buffer, "START_RECOGNIZE");
-					
 						ret = send_data(i, buffer);
 											      
 						if(ret < 0) {
 							LOG_ERROR("Errore in fase di riconoscimento del client! Chiudo la comunicazione. (STEP 1)");	
-							delete_client_device(&client_list, i);	
+						//	delete_client_device(&client_list, i);	//In questo punto non dovrebbe servire
 							close(i);
 							FD_CLR(i, &master);	
 							continue;
@@ -128,8 +126,6 @@ int main(int argc, char* argv[]) {
 
 						ret = receive_data(i, (void*)&buffer);
 						LOG_INFO("Ho ricevuto il client_device!");
-						printf("buffer ricevuto: %s\n", buffer);
-						fflush(stdout);
 
 						if(ret < 0) {
 							perror("Errore:\n");
@@ -196,9 +192,23 @@ int main(int argc, char* argv[]) {
 								
 								/* Invio dei tavoli prenotabili */
 								temp_table = table_list;
+							
+								if(table_list == NULL) { // Se non esistono tavoli prenotabili per i parametri di ricerca selezionati
+									write_text_to_buffer((void*)&buffer, "NO_TABLE\0");
+									ret = send_data(i, (void*)buffer);
 
+									if(ret < 0) {
+										set_LOG_ERROR();
+										perror("Errore durante l'invio dei tavoli prenotabili. Chiudo la comunicazione");
+										delete_client_device(&client_list, i);
+										close(i);
+										FD_CLR(i, &master);
+									}
+
+									continue; // Sia che la send vada in errore, sia che vada a buon fine
+								}
+								
 								while(temp_table != NULL) {
-									LOG_INFO("INVIO LA TABLE");
 									sprintf(buffer, "%s %s %s", &temp_table->table[0], &temp_table->room[0], &temp_table->position[0]);
 									ret = send_data(i, (void*)buffer); 
 									
@@ -214,11 +224,20 @@ int main(int argc, char* argv[]) {
 
 									if(temp_table == NULL) {
 										strcpy(buffer, "END_MSG\0");	
-										send_data(i, (void*)buffer);
+										ret = send_data(i, (void*)buffer);
+										
+										if(ret < 0) {
+											set_LOG_ERROR();
+											perror("Errore durante l'invio dei tavoli prenotabili. Chiudo la comunicazione");
+											delete_client_device(&client_list, i);
+											close(i);
+											FD_CLR(i, &master);
+											break;
+										}
 									}
 								}
 								
-								LOG_INFO("Invio table completato");
+								LOG_INFO("Invio dei tavoli prenotabili completato");
 							}
 
 						} else if(received_client->type == KD) {

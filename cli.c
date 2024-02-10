@@ -28,11 +28,8 @@ void print_menu() {
 	printf("\tesc  --> termina il client\n");
 }
 
-int check_cmd_book(char* book) {
-	return -1;
-}
-
 int main(int argc, char* argv[]) {
+
 	int ret, sd;
 	struct sockaddr_in srv_addr;
 	struct client_device cli_dev;
@@ -132,66 +129,88 @@ int main(int argc, char* argv[]) {
 		} else if(strncmp(input, "find", 4) == 0) { /* Controlla che la stringa inizi per "find" */
 
 			command = create_cmd_struct_find(input);
-			
+
+
 			if(command == NULL) {
-				printf("Sintassi del comando find errata.\nfind <cognome persone data ora>\ndove 'data' in formato GG-MM-AA e 'ora' in formato HH\n");
+				printf("Sintassi del comando find errata.\nfind <cognome persone data ora> dove 'data' è in formato GG-MM-AA e 'ora' in formato HH\n");
 				continue; // Skip dell'invio, sintassi del comando errata	
-			
-			} else {
-
-				/* Copio il contenuto di 'input' in 'buffer' per poter sfruttare la send_data
-				 * ed evitare di deallocare e riallocare con un'altra dimensione 'input'
-				 */
-				
-				write_text_to_buffer((void*)&buffer, input);
-				
-				/* Invio del comando find */
-				ret = send_data(sd, buffer);
-				
-				if(ret < 0) {
-					perror("Errore in fase di invio comando: ");
-					exit(1);
-				}
-
-				table_list = NULL;			
-				
-				for(;;) {
-
-					/* Attesa della response con i tavoli prenotabili */					
-					ret = receive_data(sd, (void*)&buffer);
-
-					if(strcmp(buffer, "END_MSG\0") == 0)
-						break;
-
-					/* Aggiunta del tavolo nella table_list */
-					temp_table = (struct table*)malloc(sizeof(struct table));
-					temp_table->next = NULL;
-					ret = sscanf(buffer, "%s %s %s", &temp_table->table[0], &temp_table->room[0], &temp_table->position[0]);
-					add_to_table_list(&table_list, temp_table);
-						
-				}
-
-				print_bookable_tables(table_list);
-				
-
-				/* Invio del comando book */
-				
-				fgets(input, INPUT_SIZE, stdin);
-			
-				if(strcmp(input, "esc\n") == 0) {	
-					printf("Chiusura client...\n");
-					exit(0);
-				} else if(strncmp(input, "book", 4) == 0) { // Controlla che la stringa inizi per 'book'
-					printf("Comando book eseguito\n");
-					
-				}
 			}
 
-		} else if(strncmp(input, "book", 4) == 0) { // Controlla che la stringa inizi per 'book'
-		
-			ret = check_cmd_book(input);
-			printf("Errore: la prenotazione non può essere completata. Usare prima il comando 'find' e solo dopo il comando 'book'.\n");
-		
+			/* Copio il contenuto di 'input' in 'buffer' per poter sfruttare la send_data
+			 * ed evitare di deallocare e riallocare con un'altra dimensione 'input'
+			 */
+				
+			write_text_to_buffer((void*)&buffer, input);
+				
+			/* Invio del comando find */
+			ret = send_data(sd, buffer);
+				
+			if(ret < 0) {
+				perror("Errore in fase di invio comando: ");
+				exit(1);
+			}
+
+			table_list = NULL;			
+				
+			for(;;) {
+
+				/* Attesa della response con i tavoli prenotabili */					
+				ret = receive_data(sd, (void*)&buffer);
+
+				if(strcmp(buffer, "NO_TABLE\0") == 0) {
+					printf("Ho ricevuto no table");
+					table_list = NULL;
+					break;
+				}
+					
+				if(strcmp(buffer, "END_MSG\0") == 0) {
+					printf("Ho ricevuto end msgi\n");
+					break;
+				}
+
+				/* Aggiunta del tavolo nella table_list */
+				temp_table = (struct table*)malloc(sizeof(struct table));
+				temp_table->next = NULL;
+				ret = sscanf(buffer, "%s %s %s", &temp_table->table[0], &temp_table->room[0], &temp_table->position[0]);
+				add_to_table_list(&table_list, temp_table);
+
+			}
+
+			if(table_list == NULL) {
+				printf("Non è disponibile nessun tavolo con i parametri selezionati\n");
+				continue;
+			} else {
+				print_bookable_tables(table_list);
+			}
+
+			/* Da qui in poi, a seguito della find, i comandi possibili sono 'book' e 'esc' */
+			
+			fgets(input, INPUT_SIZE, stdin);
+			
+			if(strcmp(input, "esc\n") == 0) {	
+				
+				printf("Chiusura client...\n");
+				exit(0);
+
+			} else if(strncmp(input, "book", 4) == 0) { // Controlla che la stringa inizi per 'book'
+					
+				command = create_cmd_struct_book(input, table_list);
+				
+				if(command == NULL) {
+					printf("Sintassi del comando book errata.\nbook <opz> dove 'opz' è una delle opzioni tra i tavoli disponibili\n");
+					continue; // Skip dell'invio, sintassi del comando errata	
+				}
+
+				printf("Comando book eseguito\n");
+
+			} else {
+				printf("Dopo la find gli unici comandi consentiti sono 'book' o 'esc'! Ripetere la sequenza di comandi correttamente\n");
+			}
+			
+		} else if(strncmp(input, "book", 4) == 0) { // Controlla che la stringa inizi per 'book'	
+			printf("La prenotazione non può essere completata. Usare prima il comando 'find' e solo dopo il comando 'book'.\n");
+		} else {
+			printf("Comando errato. Utilizzare solo i comandi consentiti\n");
 		}
 	}
 }

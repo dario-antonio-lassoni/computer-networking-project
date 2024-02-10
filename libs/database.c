@@ -51,6 +51,25 @@ void print_bookable_tables(struct table* list) {
 	}
 }
 
+int count_elements_in_table_list(struct table* list) {
+	
+	struct table* curr;
+	int num_elem = 0;
+
+	if(list == NULL)
+		return -1;
+	
+	curr = list;
+
+	while(curr != NULL) {
+		num_elem++;
+		curr = curr->next;
+	}
+
+	return num_elem;
+
+}
+
 struct booking* load_booking_list() {
 	struct booking *list, *prec, *curr;
 	FILE* fptr;

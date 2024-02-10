@@ -34,6 +34,7 @@ void select_booking_by_timestamp(struct booking** booking_list, int year, int mo
 /* TABLE_MAP */
 void print_table_list(struct table* list);
 void print_bookable_tables(struct table* list);
+int count_elements_in_table_list(struct table* list);
 struct table* load_table_list();
 /* Ritorna i tavoli prenotabili */
 struct table* get_bookable_table(int year, int month, int day, int hour, int seats); 
