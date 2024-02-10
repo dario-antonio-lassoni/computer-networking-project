@@ -58,6 +58,7 @@ struct client_device* create_client_device(int fd, int port, enum client_type ty
 	dev->fd = fd;
 	dev->port = port;
 	dev->type = type;
+	dev->bookable_table = NULL;
 	dev->next = NULL;
 	
 	return dev;
@@ -104,6 +105,7 @@ int add_client_device(struct client_device** head, struct client_device* client)
 			(*head)->fd = client->fd;
 			(*head)->port = client->port;
 			(*head)->type = client->type;
+			(*head)->bookable_table = client->bookable_table;
 			(*head)->next = NULL;
 		} else {
 			LOG_ERROR("Errore durante l'aggiunta del descrittore client device alla lista dei client collegati.");

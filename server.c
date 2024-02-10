@@ -68,6 +68,7 @@ int main(int argc, char* argv[]) {
 			  
 	FD_SET(listener, &master);
 	fdmax = listener;
+
 	LOG_INFO("Server avviato e in ascolto.");
 	
 	for(;;) {
@@ -118,7 +119,6 @@ int main(int argc, char* argv[]) {
 											      
 						if(ret < 0) {
 							LOG_ERROR("Errore in fase di riconoscimento del client! Chiudo la comunicazione. (STEP 1)");	
-						//	delete_client_device(&client_list, i);	//In questo punto non dovrebbe servire
 							close(i);
 							FD_CLR(i, &master);	
 							continue;
@@ -177,7 +177,7 @@ int main(int argc, char* argv[]) {
 							LOG_INFO("Il comando è stato ricevuto da un Client");
 						
 							/* Riconoscimento del comando */
-							if(strncmp(buffer, "find", 4) == 0) { // Controlla che il comando ricevuto inizi per 'find'
+							if(strncmp(buffer, "find", 4) == 0) { // Comando 'find'
 						
 								command = create_cmd_struct_find(buffer);
 								set_LOG_INFO();
@@ -237,7 +237,18 @@ int main(int argc, char* argv[]) {
 									}
 								}
 								
-								LOG_INFO("Invio dei tavoli prenotabili completato");
+								LOG_INFO("Invio dei tavoli prenotabili completato. ");
+
+								/* Salvataggio della lista dei tavoli prenotabili per questo client,
+								 * per poterla poi riutilizzare alla ricezione del comando 'book' */
+							
+								add_to_table_list(&received_client->bookable_table, table_list);
+
+							} else if(strncmp(buffer, "book", 4) == 0) { // Comando 'book'
+								
+								command = create_cmd_struct_book(buffer, received_client->bookable_table);
+								// Aggiunta della prenotazione 
+
 							}
 
 						} else if(received_client->type == KD) {

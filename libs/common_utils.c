@@ -80,16 +80,21 @@ int check_cmd_book(struct cmd_struct* command, struct table* list, int ret) {
 		return -1;
 	}
 
-	return ret ;
+	return ret;
 }
 
 struct cmd_struct* create_cmd_struct_book(char* input, struct table* list) {
 	
+	int i;
+
 	/* Allocazione memoria per la cmd_struct */
 	
 	struct cmd_struct* command = (struct cmd_struct*)malloc(sizeof(struct cmd_struct));
 	command->cmd = (char*)malloc(sizeof(char) * 4);
 	command->args[0] = (int*)malloc(sizeof(int));
+	
+	for(i = 1; i < 6; i++)
+		command->args[i] = NULL;
 
 	/* Popola la struct */
 

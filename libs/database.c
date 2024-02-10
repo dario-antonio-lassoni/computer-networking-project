@@ -132,6 +132,8 @@ struct table* load_table_list() {
 	return list;	
 }
 
+//int save_booking(struct cmd_struct* command, struct table* table,
+
 /* Elimina dalla booking_list passata come argomento tutte le prenotazioni che non hanno lo stesso timeslot */
 void select_booking_by_timestamp(struct booking** booking_list, int day, int month, int year, int hour) {
 	struct booking *curr, *prev;

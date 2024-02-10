@@ -200,17 +200,45 @@ int main(int argc, char* argv[]) {
 					printf("Sintassi del comando book errata.\nbook <opz> dove 'opz' è una delle opzioni tra i tavoli disponibili\n");
 					continue; // Skip dell'invio, sintassi del comando errata	
 				}
+				
+				
+				/* Copio il contenuto di 'input' in 'buffer' per poter sfruttare la send_data
+			 	 * ed evitare di deallocare e riallocare con un'altra dimensione 'input'
+				 */
+				
+				write_text_to_buffer((void*)&buffer, input);
+				
+				/* Invio del comando book */
+				ret = send_data(sd, buffer);
+				
+				if(ret < 0) {
+					perror("Errore in fase di invio comando: ");
+					exit(1);
+				}
+	
+				/* Attesa della response con la conferma prenotazione */
+				ret = receive_data(sd, (void*)&buffer);
 
-				printf("Comando book eseguito\n");
-
+				if(strcmp(buffer, "BOOK_OK\0") == 0) {
+					printf("La prenotazione è andata a buon fine.");
+				} else if(strcmp(buffer, "BOOK_KO\0") == 0) {
+					printf("Si è verificato un errore durante la ricezione della conferma della prenotazione\n");
+				} else {
+					printf("Errore sconosciuto\n");
+				}	
+					
 			} else {
 				printf("Dopo la find gli unici comandi consentiti sono 'book' o 'esc'! Ripetere la sequenza di comandi correttamente\n");
 			}
 			
 		} else if(strncmp(input, "book", 4) == 0) { // Controlla che la stringa inizi per 'book'	
+		
 			printf("La prenotazione non può essere completata. Usare prima il comando 'find' e solo dopo il comando 'book'.\n");
+		
 		} else {
+		
 			printf("Comando errato. Utilizzare solo i comandi consentiti\n");
+		
 		}
 	}
 }
