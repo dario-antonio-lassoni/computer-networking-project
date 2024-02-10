@@ -18,7 +18,6 @@
 #include "libs/database.h"
 
 #define BACKLOG_SIZE 10 /* Default backlog size del listener */
-#define BUFFER_SIZE 1024 /* Dimensione massima del buffer usato per la comunicazione con i client */
 
 int main(int argc, char* argv[]) {
 	int ret, newfd, listener, i, addrlen, server_port, fdmax;
@@ -27,7 +26,7 @@ int main(int argc, char* argv[]) {
 	struct client_device* client_list = NULL;
 	struct cmd_struct* command;	
 	struct sockaddr_in server_addr, client_addr;
-	char* buffer = (char*)malloc(sizeof(char) * BUFFER_SIZE);
+	char* buffer = NULL;
 	struct table *table_list, *temp_table;
 
 	if(argc != 2) {
@@ -168,10 +167,11 @@ int main(int argc, char* argv[]) {
 						}
 
 					} else { /* Logiche per i comandi ricevuti */
-						/* Riconoscimento del client (attraverso il type) */	
+
+						/* Riconoscimento del client attraverso il type */	
 						received_client = find_client_device_by_fd(&client_list, i);
 
-						if(received_client == NULL) { /* Il client non è tra quelli che hanno chiesto di essere riconosciuti */
+						if(received_client == NULL) { // Il client non è tra quelli che hanno chiesto di essere riconosciuti
 							
 							LOG_ERROR("Errore: un client ha tentato di inviare un comando prima di essere riconosciuto");
 							continue;	
@@ -181,7 +181,7 @@ int main(int argc, char* argv[]) {
 							LOG_INFO("Il comando è stato ricevuto da un Client");
 						
 							/* Riconoscimento del comando */
-							if(strncmp(buffer, "find", 4) == 0) { /* Controlla che il comando ricevuto inizi per "find" */
+							if(strncmp(buffer, "find", 4) == 0) { // Controlla che il comando ricevuto inizi per 'find'
 						
 								command = create_cmd_struct_find(buffer);
 								set_LOG_INFO();

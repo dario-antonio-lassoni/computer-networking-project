@@ -18,8 +18,7 @@
 #include "libs/common_utils.h"
 #include "libs/database.h"
 
-#define REQUEST_SIZE 512
-#define BUFFER_SIZE 1024
+#define INPUT_SIZE 512
 
 void print_menu() {
 //	printf("\e[1;1H\e[2J");
@@ -37,8 +36,8 @@ int main(int argc, char* argv[]) {
 	int ret, sd;
 	struct sockaddr_in srv_addr;
 	struct client_device cli_dev;
-	char* buffer = (char*)malloc(sizeof(char) * BUFFER_SIZE);
-	char* request = (char*)malloc(sizeof(char) * REQUEST_SIZE);
+	char* buffer = NULL;
+	char* input = (char*)malloc(sizeof(char) * INPUT_SIZE);
 	struct cmd_struct* command;
 	struct table *table_list, *temp_table;
 
@@ -70,8 +69,8 @@ int main(int argc, char* argv[]) {
 	}
 	
 	/* Invio della richiesta di riconoscimento verso il server */
-	write_text_to_buffer((void*)&request, "RECOGNIZE_ME");
-	ret = send_data(sd, request);
+	write_text_to_buffer((void*)&buffer, "RECOGNIZE_ME");
+	ret = send_data(sd, buffer);
 		
 	if(ret < 0) {
 		set_LOG_ERROR();
@@ -98,8 +97,8 @@ int main(int argc, char* argv[]) {
 	}
 
 	/* Invio la tipologia del client al server per la fase di riconoscimento  */
-	sprintf(request, "%d %d", cli_dev.port, cli_dev.type);
-	ret = send_data(sd, request);
+	sprintf(buffer, "%d %d", cli_dev.port, cli_dev.type);
+	ret = send_data(sd, buffer);
 	LOG_INFO("Invio tipologia del client al server");
 	if(ret < 0) {
 		set_LOG_ERROR();
@@ -124,24 +123,30 @@ int main(int argc, char* argv[]) {
 
 	for(;;) {
 		print_menu();
-		fgets(request, REQUEST_SIZE, stdin);
+		fgets(input, INPUT_SIZE, stdin);
 		
-		if(strcmp(request, "esc\n") == 0) {	
+		if(strcmp(input, "esc\n") == 0) {	
 			printf("Chiusura client...\n");
 			exit(0);
 
-		} else if(strncmp(request, "find", 4) == 0) { /* Controlla che la stringa inizi per "find" */
+		} else if(strncmp(input, "find", 4) == 0) { /* Controlla che la stringa inizi per "find" */
 
-			command = create_cmd_struct_find(request);
+			command = create_cmd_struct_find(input);
 			
 			if(command == NULL) {
 				printf("Sintassi del comando find errata.\nfind <cognome persone data ora>\ndove 'data' in formato GG-MM-AA e 'ora' in formato HH\n");
 				continue; // Skip dell'invio, sintassi del comando errata	
 			
 			} else {
+
+				/* Copio il contenuto di 'input' in 'buffer' per poter sfruttare la send_data
+				 * ed evitare di deallocare e riallocare con un'altra dimensione 'input'
+				 */
+				
+				write_text_to_buffer((void*)&buffer, input);
 				
 				/* Invio del comando find */
-				ret = send_data(sd, request);
+				ret = send_data(sd, buffer);
 				
 				if(ret < 0) {
 					perror("Errore in fase di invio comando: ");
@@ -168,12 +173,23 @@ int main(int argc, char* argv[]) {
 
 				print_bookable_tables(table_list);
 				
-				// Invio della book
+
+				/* Invio del comando book */
+				
+				fgets(input, INPUT_SIZE, stdin);
+			
+				if(strcmp(input, "esc\n") == 0) {	
+					printf("Chiusura client...\n");
+					exit(0);
+				} else if(strncmp(input, "book", 4) == 0) { // Controlla che la stringa inizi per 'book'
+					printf("Comando book eseguito\n");
+					
+				}
 			}
 
-		} else if(strncmp(request, "book", 4) == 0) { /* Controlla che la stringa inizi per "book" */
+		} else if(strncmp(input, "book", 4) == 0) { // Controlla che la stringa inizi per 'book'
 		
-			ret = check_cmd_book(request);
+			ret = check_cmd_book(input);
 			printf("Errore: la prenotazione non può essere completata. Usare prima il comando 'find' e solo dopo il comando 'book'.\n");
 		
 		}

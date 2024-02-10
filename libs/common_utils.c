@@ -43,13 +43,10 @@ void write_text_to_buffer(void** buf, char* text) {
 }
 
 int send_data(int sd, void* buf) {
-
 	uint16_t lmsg;
 	int ret, len;
 
 	len = strlen(buf);
-	printf("send data: len %d\n", len);	
-	fflush(stdout);
 	/* Conversione in formato network */
 	lmsg = htons(len);
 	
