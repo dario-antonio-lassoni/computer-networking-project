@@ -9,6 +9,7 @@
 #define DEVICE_UTILS_H
 
 #include "common_header.h"
+#include "common_utils.h"
 
 enum client_type { CL, TD, KD };
 
@@ -17,6 +18,7 @@ struct client_device {
 	int port; 
 	enum client_type type; // Tipologia di client collegato
 	struct table* bookable_table; // Copia dei tavoli prenotabili per facilitarne il recupero durante l'utilizzo del comando book
+	struct cmd_struct* find_cmd; // Copia dei parametri della find per facilitare il recupero delle informazioni relative al timeslot (book)
 	struct client_device* next; // Puntatore al prossimo client collegato della lista
 };
 

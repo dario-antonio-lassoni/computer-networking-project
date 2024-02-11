@@ -132,7 +132,12 @@ int main(int argc, char* argv[]) {
 
 
 			if(command == NULL) {
-				printf("Sintassi del comando find errata.\nfind <cognome persone data ora> dove 'data' è in formato GG-MM-AA e 'ora' in formato HH\n");
+				printf("Sintassi del comando find errata.\n");
+				printf("find <cognome persone data ora> dove:\n\t");
+				printf("'cognome' è formato da max 20 caratteri\n\t");
+				printf("'persone' è formato da 2 cifre\n\t");
+				printf("'data' è in formato GG-MM-AA\n\t");
+				printf("'ora' in formato HH\n");
 				continue; // Skip dell'invio, sintassi del comando errata	
 			}
 

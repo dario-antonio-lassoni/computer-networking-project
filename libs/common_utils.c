@@ -17,10 +17,10 @@ int check_cmd_find(struct cmd_struct* command, int ret) {
 		return -1;
 
 		/* Verifica primo argomento (cognome) */
-	if(	(command->args[0] == NULL) ||
+	if(	(command->args[0] == NULL || strlen(command->args[0]) > 20) ||
 		
 		/* Verifico secondo argomento (numero di persone) */
-		(command->args[1] == NULL || *((int*)command->args[1]) < 1) ||
+		(command->args[1] == NULL || *((int*)command->args[1]) < 1 || *((int*)command->args[1]) > 99) ||
 		
 		/* Verifica gli argomenti rimanenti (data e ora) */
 		(command->args[2] == NULL || *((int*)command->args[2]) < 1 || *((int*)command->args[2]) > 31) ||

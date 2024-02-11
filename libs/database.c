@@ -7,6 +7,7 @@
 
 #include "database.h"
 #include "common_header.h"
+#include "common_utils.h"
 
 void print_booking_list(struct booking* list) {
 	struct booking* curr = list;
@@ -70,6 +71,19 @@ int count_elements_in_table_list(struct table* list) {
 
 }
 
+char* create_booking_code(char* table, int day, int month, int year, int hour) {
+
+	char* booking_code = (char*)malloc(sizeof(char) * 10); 
+	
+	memset(booking_code, 0, 10);
+	sprintf(booking_code, "%s%d%d%d%d", table, day, month, year, hour);
+
+	/* I codici di prenotazione sono univoci per tavolo + timeslot
+	 * dunque non si rischia di generarne due uguali */
+
+	return booking_code;	
+}
+
 struct booking* load_booking_list() {
 	struct booking *list, *prec, *curr;
 	FILE* fptr;
@@ -117,7 +131,7 @@ struct table* load_table_list() {
 	list = (struct table*)malloc(sizeof(struct table));
 	prec = NULL;
 	curr = list;
-	
+
 	while(fscanf(fptr, "%s %s %s POSTI:%d", curr->table, curr->room, curr->position, &curr->seats) != EOF) {	
 		prec = curr;	
 		curr->next = (struct table*)malloc(sizeof(struct table));
@@ -132,7 +146,54 @@ struct table* load_table_list() {
 	return list;	
 }
 
-//int save_booking(struct cmd_struct* command, struct table* table,
+
+int save_booking(struct cmd_struct* book_cmd, struct cmd_struct* find_cmd, struct table* table, char* code) {
+	
+	FILE* fptr;
+	int i;
+	struct table* curr;
+
+	if(book_cmd == NULL || find_cmd == NULL || table == NULL)
+		return -1;	
+	LOG_INFO("Apertura file in corso");	
+	fptr = fopen("./database/booking.txt", "a");
+
+	if(fptr == NULL) {
+		LOG_ERROR("Errore durante il salvataggio della prenotazione");
+		return -1; // Gestisco l'errore fuori
+	}
+	
+	/* Ricavo l'opzione scelta con il comando book dalla lista dei tavoli prenotabili */
+	
+	curr = table;
+	
+	for(i = 1; i < *((int*)book_cmd->args[0]); i++) // args[0] contiene l'opzione selezionata dal client con il comando book
+		curr = curr->next;
+
+	code = create_booking_code(
+			curr->table, // Tavolo 
+			*((int*)find_cmd->args[2]) // Giorno
+			, *((int*)find_cmd->args[3]), // Mese
+			*((int*)find_cmd->args[4]), // Anno
+			*((int*)find_cmd->args[5])); //Ora
+
+	/* Scrittura in append sul file delle prenotazioni */
+
+	fprintf(fptr, "%s %d-%d-%d %d %s %s\n", 
+			curr->table, // Tavolo
+			*((int*)find_cmd->args[2]), // Giorno 
+			*((int*)find_cmd->args[3]), // Mese
+			*((int*)find_cmd->args[4]), // Anno
+			*((int*)find_cmd->args[5]), // Ora
+			(char*)find_cmd->args[0],  // Cognome
+			code); // Codice prenotazione
+	
+	fclose(fptr);
+
+	LOG_INFO("Salvataggio della prenotazione andato a buon fine");
+
+	return 0; // Salvataggio andato a buon fine
+}
 
 /* Elimina dalla booking_list passata come argomento tutte le prenotazioni che non hanno lo stesso timeslot */
 void select_booking_by_timestamp(struct booking** booking_list, int day, int month, int year, int hour) {

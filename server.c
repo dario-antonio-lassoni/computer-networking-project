@@ -244,11 +244,31 @@ int main(int argc, char* argv[]) {
 							
 								add_to_table_list(&received_client->bookable_table, table_list);
 
+								/* Salvataggio del command find, in particolare dei parametri passati,
+								 * per poterli poi riutilizzare alla ricezione del comando 'book' */
+								
+								received_client->find_cmd = command;
+
 							} else if(strncmp(buffer, "book", 4) == 0) { // Comando 'book'
 								
 								command = create_cmd_struct_book(buffer, received_client->bookable_table);
-								// Aggiunta della prenotazione 
+								
+								/* Aggiunta della prenotazione */ 
+								// save_booking ritorna il codice di prenotazione (char*) se va tutto bene altrimenti BOOK_KO
+								ret = save_booking(command, received_client->find_cmd, received_client->bookable_table, buffer);
+								// Scrittura su buffer con write_text_to_buffer dentro la save_booking
+								
+								if(ret == -1) {
+									LOG_ERROR("ERRORE");
+									//Send BOOK_KO
+									//delete device_client
+									//chiusura comunicazione ecc....
+								}
 
+								//Send codice prenotazione con il seguente formato: BOOK_OK_<COD_PRENOTAZIONE>
+								//COD_PRENOTAZIONE dentro il buffer
+
+								LOG_INFO("Prenotazione effettuata");
 							}
 
 						} else if(received_client->type == KD) {
