@@ -224,12 +224,13 @@ int main(int argc, char* argv[]) {
 				/* Attesa della response con la conferma prenotazione */
 				ret = receive_data(sd, (void*)&buffer);
 
-				if(strcmp(buffer, "BOOK_OK\0") == 0) {
-					printf("La prenotazione è andata a buon fine.");
+				if(strncmp(buffer, "BOOK_OK", 7) == 0) {
+					printf("La prenotazione è andata a buon fine.\n");
+					printf("Codice prenotazione: %s\n", buffer);
 				} else if(strcmp(buffer, "BOOK_KO\0") == 0) {
 					printf("Si è verificato un errore durante la ricezione della conferma della prenotazione\n");
 				} else {
-					printf("Errore sconosciuto\n");
+					printf("Errore sconosciuto in fase di conferma prenotazione\n");
 				}	
 					
 			} else {

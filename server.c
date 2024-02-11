@@ -255,17 +255,35 @@ int main(int argc, char* argv[]) {
 								
 								/* Aggiunta della prenotazione */ 
 								// save_booking ritorna il codice di prenotazione (char*) se va tutto bene altrimenti BOOK_KO
-								ret = save_booking(command, received_client->find_cmd, received_client->bookable_table, buffer);
+								ret = save_booking(command, received_client->find_cmd, received_client->bookable_table, &buffer);
 								// Scrittura su buffer con write_text_to_buffer dentro la save_booking
 								
 								if(ret == -1) {
-									LOG_ERROR("ERRORE");
-									//Send BOOK_KO
-									//delete device_client
-									//chiusura comunicazione ecc....
+									write_text_to_buffer((void*)&buffer, "BOOK_KO"); // Segnalo che ci sono stati problemi al client
+									ret = send_data(i, (void*)buffer); 
+									
+									if(ret < 0) {
+										LOG_ERROR("Errore in fase di prenotazione. Chiudo la comunicazione");
+										delete_client_device(&client_list, i);
+										close(i);
+										FD_CLR(i, &master);
+										continue;
+									}
 								}
 
-								//Send codice prenotazione con il seguente formato: BOOK_OK_<COD_PRENOTAZIONE>
+								/* Send codice prenotazione con il seguente formato: BOOK_OK_<BOOKING_CODE> */
+								
+								ret = send_data(i, (void*)buffer); 
+									
+								if(ret < 0) {
+									set_LOG_ERROR();
+									perror("Errore durante l'invio di conferma prenotazione. Chiudo la comunicazione");
+									delete_client_device(&client_list, i);
+									close(i);
+									FD_CLR(i, &master);
+									continue;
+								}
+
 								//COD_PRENOTAZIONE dentro il buffer
 
 								LOG_INFO("Prenotazione effettuata");

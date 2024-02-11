@@ -32,7 +32,7 @@ struct booking* load_booking_list();
 /* Ritorna la lista di prenotazioni che hanno il time slot indicato */
 void select_booking_by_timestamp(struct booking** booking_list, int year, int month, int day, int hour);
 /* Salva il booking su file */
-int save_booking(struct cmd_struct* book_cmd, struct cmd_struct* find_cmd, struct table* table, char* code);
+int save_booking(struct cmd_struct* book_cmd, struct cmd_struct* find_cmd, struct table* table, char** code);
 
 
 /* TABLE_MAP */
