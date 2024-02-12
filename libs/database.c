@@ -6,7 +6,6 @@
  */
 
 #include "database.h"
-#include "common_header.h"
 #include "common_utils.h"
 
 void print_booking_list(struct booking* list) {

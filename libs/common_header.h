@@ -8,4 +8,9 @@
 #include <arpa/inet.h>
 #include "logger.h"
 
+struct cmd_struct {
+	char* cmd;
+	void* args[6];
+};
+
 #endif

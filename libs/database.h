@@ -9,7 +9,7 @@
 #define DATABASE_H
 
 #include <time.h>
-#include "common_utils.h"
+#include "common_header.h"
 
 struct booking {
 	char table[3];

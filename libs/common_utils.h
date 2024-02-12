@@ -9,11 +9,7 @@
 #define COMMON_UTILS_H
 
 #include "database.h"
-
-struct cmd_struct {
-	char* cmd;
-	void* args[6];
-};
+#include "common_header.h"
 
 struct cmd_struct* create_cmd_struct_find(char* input);
 struct cmd_struct* create_cmd_struct_book(char* input, struct table* list);
