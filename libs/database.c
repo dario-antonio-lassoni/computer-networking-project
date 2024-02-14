@@ -86,7 +86,8 @@ char* create_booking_code(char* table, int day, int month, int year, int hour) {
 struct booking* load_booking_list() {
 	struct booking *list, *prec, *curr;
 	FILE* fptr;
-	
+	int fscanf_first_res;
+
 	fptr = fopen("./database/booking.txt", "r");
 	
 	if(fptr == NULL) {
@@ -98,7 +99,19 @@ struct booking* load_booking_list() {
 	list = (struct booking*)malloc(sizeof(struct booking));
 	prec = NULL;
 	curr = list;
-	
+
+	/* Con fscanf_first_res tengo traccia del primo risultato, e se è già != 7 allora vuol dire 
+	 * che non esistono prenotazioni nel file di booking */
+
+	fscanf_first_res = fscanf(fptr, "%s %d-%d-%d %d %s %s.", curr->table, &curr->timeinfo.tm_mday, &curr->timeinfo.tm_mon, 
+			&curr->timeinfo.tm_year, &curr->timeinfo.tm_hour, curr->surname, curr->booking_code);
+
+	if(fscanf_first_res != 7) {
+		free(curr);
+		fclose(fptr);
+		return NULL; // Il file è vuoto
+	}
+
 	while(fscanf(fptr, "%s %d-%d-%d %d %s %s.", curr->table, &curr->timeinfo.tm_mday, &curr->timeinfo.tm_mon, 
 			&curr->timeinfo.tm_year, &curr->timeinfo.tm_hour, curr->surname, curr->booking_code) == 7) {
 
@@ -107,18 +120,21 @@ struct booking* load_booking_list() {
 		curr = curr->next;	
 	}
 
+
 	if(prec != NULL) // Se c'è più di una prenotazione
 		prec->next = NULL; 
 
 	free(curr); // Libero la memoria dall'ultima struttura non utilizzata
 	fclose(fptr);
+
 	return list;	
 }
 
 struct table* load_table_list() {
 	struct table *list, *prec, *curr;	
 	FILE* fptr;
-	
+	int fscanf_first_res;
+
 	fptr = fopen("./database/table_map.txt", "r");
 
 	if(fptr == NULL) {
@@ -130,6 +146,17 @@ struct table* load_table_list() {
 	list = (struct table*)malloc(sizeof(struct table));
 	prec = NULL;
 	curr = list;
+
+	/* Con fscanf_first_res tengo traccia del primo risultato, e se è già != 7 allora vuol dire 
+	 * che non esistono prenotazioni nel file di booking */
+
+	fscanf_first_res = fscanf(fptr, "%s %s %s POSTI:%d", curr->table, curr->room, curr->position, &curr->seats);	
+
+	if(fscanf_first_res == EOF) {
+		free(curr);
+		fclose(fptr);
+		return NULL; // Il file è vuoto
+	}
 
 	while(fscanf(fptr, "%s %s %s POSTI:%d", curr->table, curr->room, curr->position, &curr->seats) != EOF) {	
 		prec = curr;	

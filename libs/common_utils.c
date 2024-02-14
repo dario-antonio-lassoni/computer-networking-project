@@ -128,7 +128,8 @@ int send_data(int sd, void* buf) {
 	uint16_t lmsg;
 	int ret, len;
 
-	len = strlen(buf);
+	len = strlen(buf) + 1;
+
 	/* Conversione in formato network */
 	lmsg = htons(len);
 	
@@ -138,7 +139,8 @@ int send_data(int sd, void* buf) {
 		return ret;
 
 	/* Invio dei dati */
-	ret = send(sd, (void*)buf, len + 1, 0);
+	
+	ret = send(sd, buf, len, 0);
 
 	return ret;
 
@@ -162,7 +164,7 @@ int receive_data(int sd, void** buf) {
 	*buf = (char*)malloc(sizeof(char) * len);
 
 	/* Ricezione dei dati */
-	ret = recv(sd, (void*)(*buf), len + 1, 0);
+	ret = recv(sd, *buf, len, 0);
 
 	return ret;
 
