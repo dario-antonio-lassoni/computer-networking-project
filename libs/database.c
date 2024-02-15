@@ -178,7 +178,7 @@ int save_booking(struct cmd_struct* book_cmd, struct cmd_struct* find_cmd, struc
 	FILE* fptr;
 	int i;
 	struct table* curr;
-	char* code_with_result;
+	char* code_with_result; // Se la prenotazione va a buon fine, conterrà il messaggio da inviare al client
 
 	if(book_cmd == NULL || find_cmd == NULL || table == NULL)
 		return -1;	
@@ -218,21 +218,14 @@ int save_booking(struct cmd_struct* book_cmd, struct cmd_struct* find_cmd, struc
 	fclose(fptr);
 
 	/* Creo la struttura del risultato che conterrà il codice prenotazione.
-	   Formato: BOOK_OK_<BOOKING_CODE>_<TAVOLO> */
-	
-	
+	   Formato: <BOOKING_CODE>_<TAVOLO>_<SALA> */	
 
-	code_with_result = (char*)malloc(sizeof(char) * 20);
-	memset(code_with_result, 0, 20);
-	strcat(code_with_result, *code);
-	strcat(code_with_result, "_");
-	strcat(code_with_result, curr->table);
-	strcat(code_with_result, "_");
-	strcat(code_with_result, curr->room);
-	*code = code_with_result;
-	printf("code_with_ressult: %s\n", code_with_result);
-	
-	LOG_INFO("Salvataggio della prenotazione andato a buon fine");
+	code_with_result = (char*)malloc(sizeof(char) * 60);
+	memset(code_with_result, 0, 60);
+	sprintf(code_with_result, "Codice prenotazione: %s, Tavolo: %s, Sala: %s", *code, curr->table, curr->room);		
+	*code = code_with_result;	
+	set_LOG_INFO();
+	printf("Dati prenotazione confermata: %s\n", code_with_result);
 
 	return 0; // Salvataggio andato a buon fine
 }

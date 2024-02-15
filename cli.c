@@ -37,7 +37,6 @@ int main(int argc, char* argv[]) {
 	char* input = (char*)malloc(sizeof(char) * INPUT_SIZE);
 	struct cmd_struct* command;
 	struct table *table_list, *temp_table;
-	struct booking * temp_booking;
 
 	if(argc != 2) {
 		printf("Argomenti errati. Specificare correttamente il comando come segue: ./cli <porta>\n");
@@ -229,11 +228,8 @@ int main(int argc, char* argv[]) {
 				if(strcmp(buffer, "BOOK_KO\0") == 0) {
 					printf("Si è verificato un errore durante la ricezione della conferma della prenotazione\n");
 				} else {
-					temp_booking = (struct booking*)malloc(sizeof(struct booking));
-					temp_table = (struct table*)malloc(sizeof(struct table));
-					sscanf(buffer, "%10[^_]_%3[^_]_%10[^_]", temp_booking->booking_code, temp_booking->table, temp_table->room);
 					printf("La prenotazione è andata a buon fine.\n");
-					printf("Codice prenotazione: %s, Tavolo: %s, Sala: %s\n", temp_booking->booking_code, temp_booking->table, temp_table->room);
+					printf("%s\n", buffer); // Stampa del codice, tavolo e sala associati alla prenotazione (inviati dal server)
 				}	
 					
 			} else {
