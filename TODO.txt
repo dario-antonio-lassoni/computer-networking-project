@@ -1,1 +1,8 @@
-- Fare i check sulla find (in particolare sui dati in input tipo le date, verificare che mese non sia >12 o <0, giorni>31 ecc...) 
+- Fare i check sulla find (in particolare sui dati in input tipo le date, verificare che mese non sia >12 o <0, giorni>31 ecc..)
+
+
+ERRORI CONOSCIUTI:
+- da client facendo la find di un cognome con quattro caratteri va in errore una malloc (non si sa ancora quale e per cosa)
+	es: find Lass 1 22-03-24 21 
+
+- Se booking.txt è un file vuoto ci sono problemi nella lettura della prima prenotazione effettuata (caratteri random sul table stampato del log server)

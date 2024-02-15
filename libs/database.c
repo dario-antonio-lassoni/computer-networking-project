@@ -218,12 +218,19 @@ int save_booking(struct cmd_struct* book_cmd, struct cmd_struct* find_cmd, struc
 	fclose(fptr);
 
 	/* Creo la struttura del risultato che conterrà il codice prenotazione.
-	   Formato: BOOK_OK_<BOOKING_CODE> */
+	   Formato: BOOK_OK_<BOOKING_CODE>_<TAVOLO> */
+	
+	
 
 	code_with_result = (char*)malloc(sizeof(char) * 20);
-	strcpy(code_with_result, "BOOK_OK_");
+	memset(code_with_result, 0, 20);
 	strcat(code_with_result, *code);
+	strcat(code_with_result, "_");
+	strcat(code_with_result, curr->table);
+	strcat(code_with_result, "_");
+	strcat(code_with_result, curr->room);
 	*code = code_with_result;
+	printf("code_with_ressult: %s\n", code_with_result);
 	
 	LOG_INFO("Salvataggio della prenotazione andato a buon fine");
 

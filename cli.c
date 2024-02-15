@@ -37,6 +37,7 @@ int main(int argc, char* argv[]) {
 	char* input = (char*)malloc(sizeof(char) * INPUT_SIZE);
 	struct cmd_struct* command;
 	struct table *table_list, *temp_table;
+	struct booking * temp_booking;
 
 	if(argc != 2) {
 		printf("Argomenti errati. Specificare correttamente il comando come segue: ./cli <porta>\n");
@@ -177,7 +178,8 @@ int main(int argc, char* argv[]) {
 				temp_table = (struct table*)malloc(sizeof(struct table));
 				temp_table->next = NULL;
 				ret = sscanf(buffer, "%s %s %s", &temp_table->table[0], &temp_table->room[0], &temp_table->position[0]);
-				add_to_table_list(&table_list, temp_table);
+				add_to_table_list(&table_list, temp_table); //Controllare se questa add fa una copia o passa il puntatore
+									    //se fa una copia dei dati allora fare la free dopo questa add
 
 			}
 
@@ -224,13 +226,14 @@ int main(int argc, char* argv[]) {
 				/* Attesa della response con la conferma prenotazione */
 				ret = receive_data(sd, (void*)&buffer);
 
-				if(strncmp(buffer, "BOOK_OK", 7) == 0) {
-					printf("La prenotazione è andata a buon fine.\n");
-					printf("Codice prenotazione: %s\n", buffer);
-				} else if(strcmp(buffer, "BOOK_KO\0") == 0) {
+				if(strcmp(buffer, "BOOK_KO\0") == 0) {
 					printf("Si è verificato un errore durante la ricezione della conferma della prenotazione\n");
 				} else {
-					printf("Errore sconosciuto in fase di conferma prenotazione\n");
+					temp_booking = (struct booking*)malloc(sizeof(struct booking));
+					temp_table = (struct table*)malloc(sizeof(struct table));
+					sscanf(buffer, "%10[^_]_%3[^_]_%10[^_]", temp_booking->booking_code, temp_booking->table, temp_table->room);
+					printf("La prenotazione è andata a buon fine.\n");
+					printf("Codice prenotazione: %s, Tavolo: %s, Sala: %s\n", temp_booking->booking_code, temp_booking->table, temp_table->room);
 				}	
 					
 			} else {
