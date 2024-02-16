@@ -1,8 +1,33 @@
+CMD VALGRIND:
+valgrind -s --leak-check=full --show-leak-kinds=all --track-origins=yes ./cli 123
+	
+
 - Fare i check sulla find (in particolare sui dati in input tipo le date, verificare che mese non sia >12 o <0, giorni>31 ecc..)
 
+Esempio che bugga:
 
-ERRORI CONOSCIUTI:
-- da client facendo la find di un cognome con quattro caratteri va in errore una malloc (non si sa ancora quale e per cosa)
-	es: find Lass 1 22-03-24 21 
+find CRENON 8 22-03-24 20
+Tavoli prenotabili per il timeslot selezionato:
+1) T8 SALA3 CENTRALE
+2) T9 SALA3 CENTRALE
+book 1
+La prenotazione è andata a buon fine.
+Codice prenotazione: T12232420, Tavolo: T1, Sala: SALA1
+Comandi disponibili:
+	find --> ricerca la disponibilità per una prenotazione
+	book --> invia una prenotazione
+	esc  --> termina il client
 
-- Se booking.txt è un file vuoto ci sono problemi nella lettura della prima prenotazione effettuata (caratteri random sul table stampato del log server)
+
+
+ALTRO:
+
+
+Tavoli prenotabili per il timeslot selezionato:
+1) T4 SALA1 CAMINO
+2) T8 SALA3 CENTRALE
+3) T9 SALA3 CENTRALE
+book 2
+La prenotazione è andata a buon fine.
+Codice prenotazione: T42532419, Tavolo: T4, Sala: SALA1
+

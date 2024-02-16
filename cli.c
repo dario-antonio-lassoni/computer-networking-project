@@ -30,7 +30,7 @@ void print_menu() {
 
 int main(int argc, char* argv[]) {
 
-	int ret, sd;
+	int ret, sd, i;
 	struct sockaddr_in srv_addr;
 	struct client_device cli_dev;
 	char* buffer = NULL;
@@ -118,18 +118,45 @@ int main(int argc, char* argv[]) {
 		exit(1);
 	}
 
+	if(buffer != NULL) {
+		free(buffer);
+		buffer = NULL;
+	}
+	
 	for(;;) {
+
 		print_menu();
 		fgets(input, INPUT_SIZE, stdin);
 		
-		if(strcmp(input, "esc\n") == 0) {	
+		if(strcmp(input, "esc\n") == 0) {
+			
+			if(buffer != NULL) {
+				free(buffer);
+				buffer = NULL;
+			}
+
+			if(input != NULL) {
+				free(input);
+				input = NULL;
+			}
+
+			temp_table = table_list;
+			
+			while(table_list != NULL) {
+				temp_table = temp_table->next;
+				free(table_list);
+				table_list = temp_table;
+			}
+
+			temp_table = NULL;
+
 			printf("Chiusura client...\n");
 			exit(0);
 
 		} else if(strncmp(input, "find", 4) == 0) { /* Controlla che la stringa inizi per "find" */
-
+			
+			command = NULL;
 			command = create_cmd_struct_find(input);
-
 
 			if(command == NULL) {
 				printf("Sintassi del comando find errata.\n");
@@ -139,6 +166,23 @@ int main(int argc, char* argv[]) {
 				printf("'data' è in formato GG-MM-AA\n\t");
 				printf("'ora' in formato HH\n");
 				continue; // Skip dell'invio, sintassi del comando errata	
+			}
+			
+			if(command->cmd != NULL) { 
+				free(command->cmd);
+				command->cmd = NULL;
+			}
+
+			for(i = 0; i < 6; i++) {
+				if(command->args[i] != NULL) {
+					free(command->args[i]);
+					command->args[i] = NULL;
+				}
+			}
+
+			if(command != NULL) {
+				free(command);
+				command = NULL;
 			}
 
 			/* Copio il contenuto di 'input' in 'buffer' per poter sfruttare la send_data
@@ -156,20 +200,19 @@ int main(int argc, char* argv[]) {
 			}
 
 			table_list = NULL;			
-				
+			temp_table = NULL;
+
 			for(;;) {
 
-				/* Attesa della response con i tavoli prenotabili */					
+				/* Attesa della response con i tavoli prenotabili */	
 				ret = receive_data(sd, (void*)&buffer);
 
 				if(strcmp(buffer, "NO_TABLE\0") == 0) {
-					printf("Ho ricevuto no table");
 					table_list = NULL;
 					break;
 				}
-					
+
 				if(strcmp(buffer, "END_MSG\0") == 0) {
-					printf("Ho ricevuto end msgi\n");
 					break;
 				}
 
@@ -177,9 +220,12 @@ int main(int argc, char* argv[]) {
 				temp_table = (struct table*)malloc(sizeof(struct table));
 				temp_table->next = NULL;
 				ret = sscanf(buffer, "%s %s %s", &temp_table->table[0], &temp_table->room[0], &temp_table->position[0]);
-				add_to_table_list(&table_list, temp_table); //Controllare se questa add fa una copia o passa il puntatore
-									    //se fa una copia dei dati allora fare la free dopo questa add
+				add_to_table_list(&table_list, temp_table); // Questa add prende il puntatore di temp_table
+			}
 
+			if(buffer != NULL) {
+				free(buffer);
+				buffer = NULL;
 			}
 
 			if(table_list == NULL) {
@@ -193,21 +239,51 @@ int main(int argc, char* argv[]) {
 			
 			fgets(input, INPUT_SIZE, stdin);
 			
-			if(strcmp(input, "esc\n") == 0) {	
+			if(strcmp(input, "esc\n") == 0) {
 				
+				if(buffer != NULL) {
+					free(buffer);
+					buffer = NULL;
+				}
+
+				if(input != NULL) {
+					free(input);
+					input = NULL;
+				}
+
+				temp_table = table_list;
+			
+				while(table_list != NULL) {
+					temp_table = temp_table->next;
+					free(table_list);
+					table_list = temp_table;
+				}
+
+				temp_table = NULL;
+
 				printf("Chiusura client...\n");
 				exit(0);
 
 			} else if(strncmp(input, "book", 4) == 0) { // Controlla che la stringa inizi per 'book'
-					
+				
 				command = create_cmd_struct_book(input, table_list);
 				
 				if(command == NULL) {
 					printf("Sintassi del comando book errata.\nbook <opz> dove 'opz' è una delle opzioni tra i tavoli disponibili\n");
 					continue; // Skip dell'invio, sintassi del comando errata	
 				}
-				
-				
+			
+				if(command != NULL) {	
+					free(command->cmd);
+					command->cmd = NULL;
+
+					free(command->args[0]);	
+					command->args[0] = NULL;
+					
+					free(command);
+					command = NULL;
+				}
+
 				/* Copio il contenuto di 'input' in 'buffer' per poter sfruttare la send_data
 			 	 * ed evitare di deallocare e riallocare con un'altra dimensione 'input'
 				 */
@@ -231,7 +307,12 @@ int main(int argc, char* argv[]) {
 					printf("La prenotazione è andata a buon fine.\n");
 					printf("%s\n", buffer); // Stampa del codice, tavolo e sala associati alla prenotazione (inviati dal server)
 				}	
-					
+				
+				if(buffer != NULL) {
+					free(buffer);
+					buffer = NULL;
+				}
+
 			} else {
 				printf("Dopo la find gli unici comandi consentiti sono 'book' o 'esc'! Ripetere la sequenza di comandi correttamente\n");
 			}

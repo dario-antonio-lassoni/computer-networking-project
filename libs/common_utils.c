@@ -41,7 +41,7 @@ struct cmd_struct* create_cmd_struct_find(char* input) {
 	/* Allocazione memoria per la cmd_struct */
 	
 	struct cmd_struct* command = (struct cmd_struct*)malloc(sizeof(struct cmd_struct));
-	command->cmd = (char*)malloc(sizeof(char) * 4); 
+	command->cmd = (char*)malloc(sizeof(char) * 5); 
 	command->args[0] = (char*)malloc(sizeof(char) * 100);
 
 	for(i = 1; i < 6; i++) 
@@ -59,6 +59,9 @@ struct cmd_struct* create_cmd_struct_find(char* input) {
 	ret = check_cmd_find(command, ret);
 	
 	if(ret < 6) {
+		free(command->cmd);
+		for(i = 0; i < 6; i++)
+			free(command->args[i]);
 		free(command);	
 		return NULL;
 	}
@@ -90,7 +93,7 @@ struct cmd_struct* create_cmd_struct_book(char* input, struct table* list) {
 	/* Allocazione memoria per la cmd_struct */
 	
 	struct cmd_struct* command = (struct cmd_struct*)malloc(sizeof(struct cmd_struct));
-	command->cmd = (char*)malloc(sizeof(char) * 4);
+	command->cmd = (char*)malloc(sizeof(char) * 5);
 	command->args[0] = (int*)malloc(sizeof(int));
 	
 	for(i = 1; i < 6; i++)
@@ -107,6 +110,8 @@ struct cmd_struct* create_cmd_struct_book(char* input, struct table* list) {
 	ret = check_cmd_book(command, list, ret);
 
 	if(ret < 1) {
+		free(command->cmd);
+		free(command->args[0]);
 		free(command);
 		return NULL;
 	}
@@ -117,7 +122,7 @@ struct cmd_struct* create_cmd_struct_book(char* input, struct table* list) {
 void write_text_to_buffer(void** buf, char* text) {
 
 	int len = strlen(text);
-	*buf = (char*)malloc(sizeof(char) * len);
+	*buf = (char*)malloc(sizeof(char) * (len + 1));
 	memset(*buf, 0, len);
 	strcpy(*buf, text);
 
@@ -161,6 +166,7 @@ int receive_data(int sd, void** buf) {
 
 	if(*buf != NULL) 
 		free(*buf);
+
 	*buf = (char*)malloc(sizeof(char) * len);
 
 	/* Ricezione dei dati */

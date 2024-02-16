@@ -87,7 +87,14 @@ int main(int argc, char* argv[]) {
 		for(i = 0; i <= fdmax; i++) {
 			/* Controllo se i è pronto */
 			if(FD_ISSET(i, &read_fds)) {
-				if(i == listener) {			
+
+				if(i == 0) { // Gestione comandi ricevuti dallo Standard Input del server
+					LOG_INFO("COMANDO RICEVUTO DA STDIN");
+					printf("Comando da server!\n");
+					fflush(stdout);
+
+				} else if(i == listener) {
+
 					LOG_INFO("Nuovo client rilevato, connessione in corso...");
 					addrlen = sizeof(client_addr);
 					newfd = accept(listener, (struct sockaddr*)&client_addr, (socklen_t*)&addrlen);	
@@ -293,6 +300,7 @@ int main(int argc, char* argv[]) {
 							LOG_INFO("Il comando è stato ricevuto da un Kitchen Device");		
 						}
 					}	
+				
 				}
 			}
 		}
