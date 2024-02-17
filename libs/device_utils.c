@@ -87,12 +87,12 @@ int delete_client_device(struct client_device** head, int fd) {
 	}
 
 	if(prec == NULL) { /* Il client device da eliminare è il primo */
-		*head = current->next;
+		*head = current->next; // Avanzo il puntatore alla testa all'elemento successivo
 	} else { /* Il client device da eliminare non è il primo */
 		prec->next = current->next;
 	}
-
-	free(current);
+	
+	free_mem((void*)&current);
 	print_list(head); // DEBUG DA ELIMINARE
 	return 1;
 }

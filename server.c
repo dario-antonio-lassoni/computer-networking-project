@@ -34,7 +34,7 @@ void shutdown_server(struct client_device* client_list, int fdmax) {
 		fflush(stdout);
 		prec_cli = client_list;
 		client_list = client_list->next;
-		free(prec_cli);
+		free_mem((void*)&prec_cli);
 	}
 
 	for(i = 0; i < fdmax; i++) {
@@ -327,10 +327,8 @@ int main(int argc, char* argv[]) {
 									FD_CLR(i, &master);
 									continue;
 								}
-
-								// Delete della received_client->bookable_table
+								
 								free_table_list((void*)&received_client->bookable_table);
-
 								LOG_INFO("Prenotazione effettuata");
 							}
 

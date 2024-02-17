@@ -141,7 +141,7 @@ struct table* load_table_list() {
 		curr = curr->next;
 	}
 	
-	free(curr); // Libero la memoria dall'ultima struttura non utilizzata 
+	free_mem((void*)&curr); // Libero la memoria dall'ultima struttura non utilizzata 
 	
 	if(prec != NULL)  // Se c'è almeno una prenotazione
 		prec->next = NULL; 
@@ -225,7 +225,7 @@ void select_booking_by_timestamp(struct booking** booking_list, int day, int mon
 		if(curr->timeinfo.tm_mday != day || curr->timeinfo.tm_mon != month || curr->timeinfo.tm_year != year || curr->timeinfo.tm_hour != hour) {
 			if(prev == NULL) { // Se si tratta dell'elemento in testa
 				*booking_list = (*booking_list)->next;
-				//free(curr); // Elimina l'elemento in testa
+				free(curr); // Elimina l'elemento in testa (Capire perché lo avevo commentato precedentemente)
 				curr = *booking_list;
 			} else {
 				prev->next = curr->next;
@@ -355,7 +355,9 @@ void free_table_list(struct table** list) {
 	if(*list == NULL)
 		return;
 
+	prec = NULL;
 	curr = *list;	
+	
 	while(curr != NULL) {
 		prec = curr;
 		curr = curr->next;
