@@ -18,5 +18,7 @@ void write_text_to_buffer(void** buf, char* text);
 int send_data(int sd, void* buf);
 /* Receive indipendente dalla dimensione del messaggio e che utilizza il Text Protocol */
 int receive_data(int sd, void** buf);
+/* Wrapper della free, silimita a fare dei controlli in più */
+void free_mem(void** ptr);
 
 #endif

@@ -18,6 +18,32 @@
 #include "libs/database.h"
 
 #define BACKLOG_SIZE 10 /* Default backlog size del listener */
+#define INPUT_SIZE 512
+
+
+void shutdown_server(struct client_device* client_list, int fdmax) {
+
+	struct client_device* prec_cli;
+	int i;
+
+	prec_cli = NULL;
+
+	while(client_list != NULL) {
+		//delete all client device
+		set_LOG_INFO();
+		printf("elimino client %d", client_list->fd);
+		fflush(stdout);
+		prec_cli = client_list;
+		client_list = client_list->next;
+		free(prec_cli);
+	}
+
+	for(i = 0; i < fdmax; i++) {
+		close(i);	
+	}
+
+	exit(0);
+}
 
 int main(int argc, char* argv[]) {
 	int ret, newfd, listener, i, addrlen, server_port, fdmax;
@@ -26,8 +52,11 @@ int main(int argc, char* argv[]) {
 	struct client_device* client_list = NULL;
 	struct cmd_struct* command;	
 	struct sockaddr_in server_addr, client_addr;
-	char* buffer = NULL;
+	char *buffer, *input;
 	struct table *table_list, *temp_table;
+
+	buffer = NULL;
+	input = NULL;
 
 	if(argc != 2) {
 		printf("Argomenti errati. Specificare correttamente il comando come segue: ./server <porta>\n");
@@ -66,11 +95,13 @@ int main(int argc, char* argv[]) {
 	FD_ZERO(&master);
 	FD_ZERO(&read_fds);
 			  
+	FD_SET(0, &master); // Descrittore STDIN del server
 	FD_SET(listener, &master);
 	fdmax = listener;
-
-	LOG_INFO("Server avviato e in ascolto.");
 	
+	LOG_INFO("Server avviato e in ascolto.");
+	printf("sd listener: %d\n", listener);
+	fflush(stdout);
 	for(;;) {
 
 		/* init del read_fds usato nella select() */
@@ -87,11 +118,18 @@ int main(int argc, char* argv[]) {
 		for(i = 0; i <= fdmax; i++) {
 			/* Controllo se i è pronto */
 			if(FD_ISSET(i, &read_fds)) {
-
+				
 				if(i == 0) { // Gestione comandi ricevuti dallo Standard Input del server
-					LOG_INFO("COMANDO RICEVUTO DA STDIN");
-					printf("Comando da server!\n");
-					fflush(stdout);
+					
+					input = (char*)malloc(sizeof(char) * INPUT_SIZE);
+					memset(input, 0, INPUT_SIZE);
+					fgets(input, INPUT_SIZE, stdin);
+					
+					if(strcmp(input, "stop\n") == 0) {
+						LOG_INFO("Chiusura server in corso...");
+						
+						shutdown_server(client_list, fdmax);	
+					}
 
 				} else if(i == listener) {
 
@@ -127,7 +165,7 @@ int main(int argc, char* argv[]) {
 						if(ret < 0) {
 							LOG_ERROR("Errore in fase di riconoscimento del client! Chiudo la comunicazione. (STEP 1)");	
 							close(i);
-							FD_CLR(i, &master);	
+							FD_CLR(i, &master);
 							continue;
 						}
 
@@ -249,7 +287,8 @@ int main(int argc, char* argv[]) {
 								/* Salvataggio della lista dei tavoli prenotabili per questo client,
 								 * per poterla poi riutilizzare alla ricezione del comando 'book' */
 							
-								add_to_table_list(&received_client->bookable_table, table_list);
+								received_client->bookable_table = table_list;
+								table_list = NULL;
 
 								/* Salvataggio del command find, in particolare dei parametri passati,
 								 * per poterli poi riutilizzare alla ricezione del comando 'book' */
@@ -291,7 +330,8 @@ int main(int argc, char* argv[]) {
 									continue;
 								}
 
-								//COD_PRENOTAZIONE dentro il buffer
+								// Delete della received_client->bookable_table
+								free_table_list((void*)&received_client->bookable_table);
 
 								LOG_INFO("Prenotazione effettuata");
 							}

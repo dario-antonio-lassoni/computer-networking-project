@@ -176,3 +176,12 @@ int receive_data(int sd, void** buf) {
 
 }
 
+/* Wrapper della free, si limita a fare dei controlli in più */
+void free_mem(void** ptr) {
+
+	/* Evito di fare la free se la memoria è già stata liberata */	
+	if(*ptr != NULL) {
+		free(*ptr);
+		*ptr = NULL;
+	}
+}

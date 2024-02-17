@@ -43,5 +43,6 @@ struct table* load_table_list();
 /* Ritorna i tavoli prenotabili */
 struct table* get_bookable_table(int year, int month, int day, int hour, int seats); 
 void add_to_table_list(struct table** list, struct table* table);
+void free_table_list(struct table** list);
 
 #endif

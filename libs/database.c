@@ -347,3 +347,19 @@ void add_to_table_list(struct table** list, struct table* table) {
 	curr->next = table;
 
 }
+
+void free_table_list(struct table** list) {
+	
+	struct table *prec, *curr;
+
+	if(*list == NULL)
+		return;
+
+	curr = *list;	
+	while(curr != NULL) {
+		prec = curr;
+		curr = curr->next;
+		free_mem((void*)&prec);
+	}
+
+}

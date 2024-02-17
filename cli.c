@@ -20,8 +20,7 @@
 
 #define INPUT_SIZE 512
 
-void print_menu() {
-//	printf("\e[1;1H\e[2J");
+void print_command_list() {
 	printf("Comandi disponibili:\n");
 	printf("\tfind --> ricerca la disponibilità per una prenotazione\n");
 	printf("\tbook --> invia una prenotazione\n");
@@ -33,10 +32,15 @@ int main(int argc, char* argv[]) {
 	int ret, sd, i;
 	struct sockaddr_in srv_addr;
 	struct client_device cli_dev;
-	char* buffer = NULL;
-	char* input = (char*)malloc(sizeof(char) * INPUT_SIZE);
+	char *input, *buffer;
 	struct cmd_struct* command;
 	struct table *table_list, *temp_table;
+
+	input = (char*)malloc(sizeof(char) * INPUT_SIZE);
+	buffer = NULL;
+	command = NULL;
+	table_list = NULL;
+	temp_table = NULL;
 
 	if(argc != 2) {
 		printf("Argomenti errati. Specificare correttamente il comando come segue: ./cli <porta>\n");
@@ -118,33 +122,26 @@ int main(int argc, char* argv[]) {
 		exit(1);
 	}
 
-	if(buffer != NULL) {
-		free(buffer);
-		buffer = NULL;
-	}
+	free_mem((void*)&buffer);
+	
+	/* Pulizia dello schermo prima di stampare la lista comandi */	
+	printf("\e[1;1H\e[2J");
 	
 	for(;;) {
 
-		print_menu();
+		print_command_list();
 		fgets(input, INPUT_SIZE, stdin);
 		
 		if(strcmp(input, "esc\n") == 0) {
 			
-			if(buffer != NULL) {
-				free(buffer);
-				buffer = NULL;
-			}
-
-			if(input != NULL) {
-				free(input);
-				input = NULL;
-			}
+			free_mem((void*)&buffer);
+			free_mem((void*)&input);
 
 			temp_table = table_list;
 			
 			while(table_list != NULL) {
 				temp_table = temp_table->next;
-				free(table_list);
+				free_mem((void*)&table_list);
 				table_list = temp_table;
 			}
 
@@ -168,22 +165,13 @@ int main(int argc, char* argv[]) {
 				continue; // Skip dell'invio, sintassi del comando errata	
 			}
 			
-			if(command->cmd != NULL) { 
-				free(command->cmd);
-				command->cmd = NULL;
-			}
+			free_mem((void*)&command->cmd);
 
 			for(i = 0; i < 6; i++) {
-				if(command->args[i] != NULL) {
-					free(command->args[i]);
-					command->args[i] = NULL;
-				}
+				free_mem((void*)&command->args[i]);
 			}
 
-			if(command != NULL) {
-				free(command);
-				command = NULL;
-			}
+			free_mem((void*)&command);
 
 			/* Copio il contenuto di 'input' in 'buffer' per poter sfruttare la send_data
 			 * ed evitare di deallocare e riallocare con un'altra dimensione 'input'
@@ -223,10 +211,7 @@ int main(int argc, char* argv[]) {
 				add_to_table_list(&table_list, temp_table); // Questa add prende il puntatore di temp_table
 			}
 
-			if(buffer != NULL) {
-				free(buffer);
-				buffer = NULL;
-			}
+			free_mem((void*)&buffer);
 
 			if(table_list == NULL) {
 				printf("Non è disponibile nessun tavolo con i parametri selezionati\n");
@@ -241,21 +226,14 @@ int main(int argc, char* argv[]) {
 			
 			if(strcmp(input, "esc\n") == 0) {
 				
-				if(buffer != NULL) {
-					free(buffer);
-					buffer = NULL;
-				}
-
-				if(input != NULL) {
-					free(input);
-					input = NULL;
-				}
+				free_mem((void*)&buffer);
+				free_mem((void*)&input);
 
 				temp_table = table_list;
 			
 				while(table_list != NULL) {
 					temp_table = temp_table->next;
-					free(table_list);
+					free_mem((void*)&table_list);
 					table_list = temp_table;
 				}
 
@@ -273,16 +251,9 @@ int main(int argc, char* argv[]) {
 					continue; // Skip dell'invio, sintassi del comando errata	
 				}
 			
-				if(command != NULL) {	
-					free(command->cmd);
-					command->cmd = NULL;
-
-					free(command->args[0]);	
-					command->args[0] = NULL;
-					
-					free(command);
-					command = NULL;
-				}
+				free_mem((void*)&command->cmd);
+				free_mem((void*)&command->args[0]);	
+				free_mem((void*)&command);
 
 				/* Copio il contenuto di 'input' in 'buffer' per poter sfruttare la send_data
 			 	 * ed evitare di deallocare e riallocare con un'altra dimensione 'input'
@@ -308,10 +279,7 @@ int main(int argc, char* argv[]) {
 					printf("%s\n", buffer); // Stampa del codice, tavolo e sala associati alla prenotazione (inviati dal server)
 				}	
 				
-				if(buffer != NULL) {
-					free(buffer);
-					buffer = NULL;
-				}
+				free_mem((void*)&buffer);
 
 			} else {
 				printf("Dopo la find gli unici comandi consentiti sono 'book' o 'esc'! Ripetere la sequenza di comandi correttamente\n");
@@ -324,6 +292,7 @@ int main(int argc, char* argv[]) {
 		} else {
 		
 			printf("Comando errato. Utilizzare solo i comandi consentiti\n");
+			print_command_list();
 		
 		}
 	}
