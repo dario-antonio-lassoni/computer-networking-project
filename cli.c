@@ -156,8 +156,8 @@ int main(int argc, char* argv[]) {
 			command = create_cmd_struct_find(input);
 
 			if(command == NULL) {
-				printf("Sintassi del comando find errata.\n");
-				printf("find <cognome persone data ora> dove:\n\t");
+				printf("I parametri di ricerca inseriti non sono corretti o la sintassi del comando find è errata.\n");
+				printf("Sintassi: find <cognome> <persone> <data> <ora> dove:\n\t");
 				printf("'cognome' è formato da max 20 caratteri\n\t");
 				printf("'persone' è formato da 2 cifre\n\t");
 				printf("'data' è in formato GG-MM-AA\n\t");

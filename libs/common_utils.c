@@ -16,13 +16,28 @@ int check_cmd_find(struct cmd_struct* command, int ret) {
 	if(command == NULL)
 		return -1;
 
+	/* Check che la data sia successiva a quella attale */
+  	time_t today;
+    	time(&today);
+
+   	struct tm input_date_tm = {0};
+    	input_date_tm.tm_mday = *((int*)command->args[2]); // Giorno	
+	input_date_tm.tm_mon = *((int*)command->args[3])- 1; // Mese
+	input_date_tm.tm_year = *((int*)command->args[4]) + 100; // Anno 
+	input_date_tm.tm_hour = *((int*)command->args[5]); // Ora
+
+    	time_t input_date = mktime(&input_date_tm);
+ 	printf("Timestamp data input: %ld\n", input_date);
+	printf("Timestamp oggi: %ld\n", today);
+
 		/* Verifica primo argomento (cognome) */
 	if(	(command->args[0] == NULL || strlen(command->args[0]) > 20) ||
 		
 		/* Verifico secondo argomento (numero di persone) */
 		(command->args[1] == NULL || *((int*)command->args[1]) < 1 || *((int*)command->args[1]) > 99) ||
-		
+			
 		/* Verifica gli argomenti rimanenti (data e ora) */
+		(difftime(input_date, today) < 0) ||
 		(command->args[2] == NULL || *((int*)command->args[2]) < 1 || *((int*)command->args[2]) > 31) ||
 		(command->args[3] == NULL || *((int*)command->args[3]) < 1 || *((int*)command->args[3]) > 12) ||
 		(command->args[4] == NULL || *((int*)command->args[4]) > 99) ||
@@ -59,10 +74,10 @@ struct cmd_struct* create_cmd_struct_find(char* input) {
 	ret = check_cmd_find(command, ret);
 	
 	if(ret < 6) {
-		free(command->cmd);
+		free_mem((void*)&command->cmd);
 		for(i = 0; i < 6; i++)
-			free(command->args[i]);
-		free(command);	
+			free_mem((void*)&command->args[i]);
+		free_mem((void*)&command);	
 		return NULL;
 	}
 
@@ -110,9 +125,9 @@ struct cmd_struct* create_cmd_struct_book(char* input, struct table* list) {
 	ret = check_cmd_book(command, list, ret);
 
 	if(ret < 1) {
-		free(command->cmd);
-		free(command->args[0]);
-		free(command);
+		free_mem((void*)&command->cmd);
+		free_mem((void*)&command->args[0]);
+		free_mem((void*)&command);
 		return NULL;
 	}
 
@@ -164,8 +179,7 @@ int receive_data(int sd, void** buf) {
 	/* Dealloco e rialloco il buffer così da non essere 
 	 * dipendente da una dimensione massima del buffer */
 
-	if(*buf != NULL) 
-		free(*buf);
+	free_mem((void*)&(*buf));
 
 	*buf = (char*)malloc(sizeof(char) * len);
 
