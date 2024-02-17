@@ -20,7 +20,6 @@
 #define BACKLOG_SIZE 10 /* Default backlog size del listener */
 #define INPUT_SIZE 512
 
-
 void shutdown_server(struct client_device* client_list, int fdmax) {
 
 	struct client_device* prec_cli;
@@ -126,8 +125,7 @@ int main(int argc, char* argv[]) {
 					fgets(input, INPUT_SIZE, stdin);
 					
 					if(strcmp(input, "stop\n") == 0) {
-						LOG_INFO("Chiusura server in corso...");
-						
+						LOG_INFO("Chiusura server in corso...");	
 						shutdown_server(client_list, fdmax);	
 					}
 
@@ -196,7 +194,7 @@ int main(int argc, char* argv[]) {
 
 						/* Invio ACK al client per segnalare il completamento della fase di riconoscimento */
 						LOG_INFO("Invio ACK per segnalare la fine della fase di riconoscimento al client");
-						strcpy(buffer, "END_RECOGNIZE");
+						write_text_to_buffer((void*)&buffer, "END_RECOGNIZE\0");
 						
 						ret = send_data(i, buffer);
 						if(ret < 0) {
