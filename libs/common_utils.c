@@ -10,43 +10,74 @@
 #include "database.h"
 #include <time.h>
 
+int check_port(int argc, char* argv[]) {
+
+	int port;
+
+	if(argc != 2 || sscanf(argv[1], "%d", &port) != 1) {
+		if(port == 0) {
+			return 0;
+		}
+	}
+
+	return 1;
+}
 
 int check_cmd_find(struct cmd_struct* command, int ret) {
-	
+
+  	time_t now;
+	time_t input_date;
+	struct tm input_date_tm = {0};
+
 	if(command == NULL)
 		return -1;
 
-	/* Check che la data sia successiva a quella attale */
-  	time_t today;
-    	time(&today);
+	/* Check che il timestamp in input sia successivo a quello attule */
+    	time(&now);
 
-   	struct tm input_date_tm = {0};
     	input_date_tm.tm_mday = *((int*)command->args[2]); // Giorno	
-	input_date_tm.tm_mon = *((int*)command->args[3])- 1; // Mese
+	input_date_tm.tm_mon = *((int*)command->args[3]) - 1; // Mese
 	input_date_tm.tm_year = *((int*)command->args[4]) + 100; // Anno 
 	input_date_tm.tm_hour = *((int*)command->args[5]); // Ora
 
-    	time_t input_date = mktime(&input_date_tm);
- 	printf("Timestamp data input: %ld\n", input_date);
-	printf("Timestamp oggi: %ld\n", today);
+    	input_date = mktime(&input_date_tm);
 
-		/* Verifica primo argomento (cognome) */
-	if(	(command->args[0] == NULL || strlen(command->args[0]) > 20) ||
+	if(command->args[0] == NULL || command->args[1] == NULL ||
+	   command->args[2] == NULL || command->args[3] == NULL ||
+	   command->args[4] == NULL || command->args[5] == NULL) {
+		return -1;
+	}
+
+	/* Check che ha senso fare solo a seguito della chiamata a mktime */
+	if(input_date_tm.tm_isdst == 1) { // Annullo gli effetti dell'ora legale
+		input_date_tm.tm_hour -= 1;
+		/* Se la precedente mktime ha capito che nell'orario selezionato vale l'ora legale, 
+		 * ne annullo gli effetti prima di fare i successivi controlli */
+		mktime(&input_date_tm);
+	}
+
+	
+	/* Verifica primo argomento (cognome) */
+	if((strlen(command->args[0]) > 20) ||
 		
 		/* Verifico secondo argomento (numero di persone) */
-		(command->args[1] == NULL || *((int*)command->args[1]) < 1 || *((int*)command->args[1]) > 99) ||
+		(*((int*)command->args[1]) < 1 || *((int*)command->args[1]) > 99) ||
 			
 		/* Verifica gli argomenti rimanenti (data e ora) */
-		(difftime(input_date, today) < 0) ||
-		(command->args[2] == NULL || *((int*)command->args[2]) < 1 || *((int*)command->args[2]) > 31) ||
-		(command->args[3] == NULL || *((int*)command->args[3]) < 1 || *((int*)command->args[3]) > 12) ||
-		(command->args[4] == NULL || *((int*)command->args[4]) > 99) ||
-		(command->args[5] == NULL || *((int*)command->args[5]) < 1 || *((int*)command->args[5]) > 23)) 
+		(difftime(input_date, now) < 0) || // Verifica se il timestamp in input è precedente a quello attuale
+
+		/* Validazione data e ora.
+		 * Check se a seguito della valorizzazione della struct tm i valori rimangano coerenti, 
+		 * altrimenti la data non è valida */
+	       	(input_date_tm.tm_mday != *((int*)command->args[2])) ||
+		(input_date_tm.tm_mon != (*((int*)command->args[3]) - 1)) ||
+		(input_date_tm.tm_year != (*((int*)command->args[4]) + 100)) ||
+		(*((int*)command->args[5]) < 0 || *((int*)command->args[5]) > 23)) 
 	{
 		return -1;
 	}
 
-	return ret ;
+	return ret; // Ritorno la ret passata come parametro se passa il check
 }
 
 struct cmd_struct* create_cmd_struct_find(char* input) {

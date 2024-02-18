@@ -2,7 +2,5 @@ CMD VALGRIND:
 valgrind -s --leak-check=full --show-leak-kinds=all --track-origins=yes ./cli 123
 	
 
-- Fare i check sulla find (in particolare sui dati in input tipo le date, verificare che mese non sia >12 o <0, giorni>31 ecc..)
-
 - Valutare se  inserire un check quando diversi client fanno richiesta della book sulla stessa data e restano contemporaneamente nello stato pending (fatta la find ma non ancora fatta la book)
 	ciò porterebbe alla possibilità di diversi client di prenotare per lo stesso timeslot lo stesso tavolo, perché non viene fatto un check

@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <ctype.h>
 #include "libs/logger.h"
 #include "libs/device_utils.h"
 #include "libs/common_utils.h"
@@ -20,7 +21,8 @@
 
 #define INPUT_SIZE 512
 
-void print_command_list() {
+void print_command_list() {	
+	printf("\e[1;1H\e[2J");
 	printf("Comandi disponibili:\n");
 	printf("\tfind --> ricerca la disponibilità per una prenotazione\n");
 	printf("\tbook --> invia una prenotazione\n");
@@ -36,13 +38,14 @@ int main(int argc, char* argv[]) {
 	struct cmd_struct* command;
 	struct table *table_list, *temp_table;
 
+	ret = 0;
 	input = (char*)malloc(sizeof(char) * INPUT_SIZE);
 	buffer = NULL;
 	command = NULL;
 	table_list = NULL;
 	temp_table = NULL;
 
-	if(argc != 2) {
+	if(!check_port(argc, argv)) {
 		printf("Argomenti errati. Specificare correttamente il comando come segue: ./cli <porta>\n");
 		exit(0);
 	}
@@ -64,7 +67,6 @@ int main(int argc, char* argv[]) {
 	/* Connessione */
 	ret = connect(sd, (struct sockaddr*)&srv_addr, sizeof(srv_addr));
 	if(ret < 0) {
-		set_LOG_ERROR();
 		perror("Errore in fase di connessione: ");
 		exit(1);
 	}
@@ -74,7 +76,6 @@ int main(int argc, char* argv[]) {
 	ret = send_data(sd, buffer);
 		
 	if(ret < 0) {
-		set_LOG_ERROR();
 		perror("Errore in fase di riconoscimento (step 1): \n");
 		exit(1);
 	}
@@ -83,16 +84,11 @@ int main(int argc, char* argv[]) {
 	ret = receive_data(sd, (void*)&buffer);
 	
 	if(ret < 0) {
-		set_LOG_ERROR();
 		perror("Errore in fase di riconoscimento (step 2): \n");
 		exit(1);
 	}
 	
-	printf("buffer: %s\n", buffer);
-	fflush(stdout);
-
 	if(strcmp("START_RECOGNIZE", buffer)) {
-		set_LOG_ERROR();
 		printf("Errore in fase di riconoscimento: segnale di inizio riconoscimento non ricevuto dal server");
 		exit(1);
 	}
@@ -100,9 +96,8 @@ int main(int argc, char* argv[]) {
 	/* Invio la tipologia del client al server per la fase di riconoscimento  */
 	sprintf(buffer, "%d %d", cli_dev.port, cli_dev.type);
 	ret = send_data(sd, buffer);
-	LOG_INFO("Invio tipologia del client al server");
+	
 	if(ret < 0) {
-		set_LOG_ERROR();
 		perror("Errore in fase di riconoscimento (step 3): \n");
 		exit(1);
 	}
@@ -111,25 +106,21 @@ int main(int argc, char* argv[]) {
 	ret = receive_data(sd, (void*)&buffer);
 
 	if(strcmp("END_RECOGNIZE", buffer)) {
-		set_LOG_ERROR();
 		printf("Errore in fase di riconoscimento: segnale di fine riconoscimento non ricevuto dal server");
 		exit(1);
 	}
 
 	if(ret < 0) {
-		set_LOG_ERROR();
 		perror("Errore in fase di ricezione dell'ACK per avvenuto riconoscimento: \n");
 		exit(1);
 	}
 
 	free_mem((void*)&buffer);
 	
-	/* Pulizia dello schermo prima di stampare la lista comandi */	
-	printf("\e[1;1H\e[2J");
-	
+	print_command_list();
+
 	for(;;) {
 
-		print_command_list();
 		fgets(input, INPUT_SIZE, stdin);
 		
 		if(strcmp(input, "esc\n") == 0) {
@@ -286,14 +277,9 @@ int main(int argc, char* argv[]) {
 			}
 			
 		} else if(strncmp(input, "book", 4) == 0) { // Controlla che la stringa inizi per 'book'	
-		
 			printf("La prenotazione non può essere completata. Usare prima il comando 'find' e solo dopo il comando 'book'.\n");
-		
-		} else {
-		
+		} else {	
 			printf("Comando errato. Utilizzare solo i comandi consentiti\n");
-			print_command_list();
-		
 		}
 	}
 }
