@@ -38,7 +38,6 @@ int main(int argc, char* argv[]) {
 	struct cmd_struct* command;
 	struct table *table_list, *temp_table;
 
-	ret = 0;
 	input = (char*)malloc(sizeof(char) * INPUT_SIZE);
 	buffer = NULL;
 	command = NULL;
@@ -147,7 +146,7 @@ int main(int argc, char* argv[]) {
 			command = create_cmd_struct_find(input);
 
 			if(command == NULL) {
-				printf("I parametri di ricerca inseriti non sono corretti o la sintassi del comando find è errata.\n");
+				printf("I parametri di ricerca inseriti non sono corretti o la sintassi del comando 'find' è errata.\n");
 				printf("Sintassi: find <cognome> <persone> <data> <ora> dove:\n\t");
 				printf("'cognome' è formato da max 20 caratteri\n\t");
 				printf("'persone' è formato da 2 cifre\n\t");

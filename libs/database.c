@@ -51,6 +51,17 @@ void print_bookable_tables(struct table* list) {
 	}
 }
 
+void print_menu_dishes(struct dish* list) {
+	
+	struct dish* curr = list;
+	
+	while(curr != NULL) {	
+		printf("%s - %s \t%d\n", curr->identifier, curr->description, curr->price);	
+		fflush(stdout);
+		curr = curr->next;
+	}
+}
+
 int count_elements_in_table_list(struct table* list) {
 	
 	struct table* curr;
@@ -83,6 +94,31 @@ char* create_booking_code(char* table, int day, int month, int year, int hour) {
 	return booking_code;	
 }
 
+void verify_booking_code(struct cmd_struct* command, char** res) {
+	
+	int found;
+	struct booking *list, *curr;
+	
+	found = 0;
+	list = load_booking_list();
+	curr = list;
+
+	while(curr != NULL) {
+		if(strcmp(curr->booking_code, (char*)command->args[0]) == 0) {
+			write_text_to_buffer((void**)res, "BOOKING_CODE_IS_VALID");
+			found = 1;
+			break;
+		}
+		curr = curr->next;
+	}
+
+	if(found == 0) 
+		write_text_to_buffer((void**)res, "BOOKING_CODE_IS_NOT_VALID");
+
+	free_booking_list((void*)&list);	
+	// Libera memoria allocata per la lista
+}
+
 struct booking* load_booking_list() {
 	struct booking *list, *prec, *curr;
 	FILE* fptr;
@@ -107,7 +143,7 @@ struct booking* load_booking_list() {
 		curr = curr->next;	
 	}
 
-	free(curr); // Libero la memoria dall'ultima struttura non utilizzata
+	free_mem((void*)&curr); // Libero la memoria dall'ultima struttura non utilizzata
 
 	if(prec != NULL)  // Se c'è almeno una prenotazione
 		prec->next = NULL; 
@@ -153,6 +189,39 @@ struct table* load_table_list() {
 	return list;	
 }
 
+struct dish* load_menu_dishes() {
+	struct dish *list, *prec, *curr;	
+	FILE* fptr;
+
+	fptr = fopen("./database/menu_dishes.txt", "r");
+
+	if(fptr == NULL) {
+		LOG_ERROR("Errore durante la lettura dei piatti del menu");
+		exit(1);
+	}
+								
+	/* Copia da file a lista in memoria di tutti i piatti del menu */
+	list = (struct dish*)malloc(sizeof(struct dish));
+	prec = NULL;
+	curr = list;
+
+	while(fscanf(fptr, "%d %s - %[^\n]", &curr->price, curr->identifier, curr->description) != EOF) {	
+		prec = curr;	
+		curr->next = (struct dish*)malloc(sizeof(struct dish));
+		curr = curr->next;
+	}
+	
+	free_mem((void*)&curr); // Libero la memoria dall'ultima struttura non utilizzata 
+	
+	if(prec != NULL)  // Se c'è almeno una prenotazione
+		prec->next = NULL; 
+	else 
+		list = NULL;
+	
+	fclose(fptr);	
+
+	return list;	
+}
 
 int save_booking(struct cmd_struct* book_cmd, struct cmd_struct* find_cmd, struct table* table, char** code) {
 	
@@ -207,6 +276,7 @@ int save_booking(struct cmd_struct* book_cmd, struct cmd_struct* find_cmd, struc
 	*code = code_with_result;	
 	set_LOG_INFO();
 	printf("Dati prenotazione confermata: %s\n", code_with_result);
+	fflush(stdout);
 
 	return 0; // Salvataggio andato a buon fine
 }
@@ -327,6 +397,28 @@ struct table* get_bookable_table(int seats, int day, int month, int year, int ho
 	return table_list;
 }
 
+
+void add_to_dish_list(struct dish** list, struct dish* dish) {
+	
+	struct dish* curr;
+	
+	/* Inserisco il piatto in testa se è il primo in lista */
+	if(*list == NULL) {
+		*list = dish;
+		return;
+	} 
+	
+	/* Avanzo fino alla coda della lista */
+	curr = *list;
+	while(curr->next != NULL) {
+		curr = curr->next;
+	}
+
+	/* Inserisco in coda */
+	curr->next = dish;
+
+}
+
 void add_to_table_list(struct table** list, struct table* table) {
 	
 	struct table* curr;
@@ -351,6 +443,25 @@ void add_to_table_list(struct table** list, struct table* table) {
 void free_table_list(struct table** list) {
 	
 	struct table *prec, *curr;
+
+	if(*list == NULL)
+		return;
+
+	prec = NULL;
+	curr = *list;	
+	
+	while(curr != NULL) {
+		prec = curr;
+		curr = curr->next;
+		free_mem((void*)&prec);
+	}
+
+}
+
+
+void free_booking_list(struct booking** list) {
+	
+	struct booking *prec, *curr;
 
 	if(*list == NULL)
 		return;

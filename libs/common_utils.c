@@ -165,6 +165,94 @@ struct cmd_struct* create_cmd_struct_book(char* input, struct table* list) {
 	return command;
 }
 
+struct cmd_struct* create_cmd_struct_login(char* input) {
+	
+	int i;
+
+	/* Allocazione memoria per la cmd_struct */
+	
+	struct cmd_struct* command = (struct cmd_struct*)malloc(sizeof(struct cmd_struct));
+	command->cmd = (char*)malloc(sizeof(char) * 6); //Usare CONST DA COMMON_HEADER
+	command->args[0] = (char*)malloc(sizeof(char) * 10);
+	
+	for(i = 1; i < 6; i++)
+		command->args[i] = NULL;
+
+	/* Popola la struct */
+
+	strcpy(command->cmd, "login");
+
+	int ret = sscanf(input, "login %s", (char*)command->args[0]);
+
+	if(ret != 1) {
+		free_mem((void*)&command->cmd);
+		free_mem((void*)&command->args[0]);
+		free_mem((void*)&command);
+		return NULL;
+	}
+
+	return command;
+}
+
+struct cmd_struct* create_cmd_struct_comanda(char* input) {
+	
+	int i, input_is_valid;
+	char* token;
+	struct dish* current_dish;
+
+	/* Check che la comanda contenga almeno un piatto */
+
+	input_is_valid = 0; // Se input_is_valid rimane false allora vorrà dire che non c'è almeno un piatto
+
+	/* Allocazione memoria per la cmd_struct */
+	
+	struct cmd_struct* command = (struct cmd_struct*)malloc(sizeof(struct cmd_struct));
+	command->cmd = (char*)malloc(sizeof(char) * 6); //Usare CONST DA COMMON_HEADER
+	command->args[0] = (struct dish*)malloc(sizeof(struct dish));
+	
+	current_dish = (struct dish*)(command->args[0]);
+	
+	for(i = 1; i < 6; i++)
+		command->args[i] = NULL;
+
+	/* Popola la struct */
+
+	strcpy(command->cmd, "comanda");
+
+	//int ret = sscanf(input, "login %s", (char*)command->args[0]);
+
+			
+	token = strtok(input, " ");
+	token = strtok(NULL, " "); // Indico alla funzione strtok di saltare direttamente al primo token (" ") 
+				   // così da poter leggere la coppia nome_piatto-quantità
+
+	while (token != NULL && sscanf(token, "%2s-%d", current_dish->identifier, &current_dish->quantity) == 2) {
+		
+		if(input_is_valid == 0) 
+			input_is_valid = 1;
+
+		token = strtok(NULL, " "); // Avanzo al prossimo token
+					   
+		if(token != NULL) {
+			current_dish->next = (struct dish*)malloc(sizeof(struct dish*));
+			current_dish = current_dish->next;
+		} else {
+			current_dish->next = NULL;
+		}
+	}
+
+	/* Se l'input non è valido allora pulisco la memoria */
+
+	if(!input_is_valid) {
+		free_mem((void*)&command->cmd);
+		free_mem((void*)&command->args[0]);
+		free_mem((void*)&command);
+		return NULL;
+	}
+
+	return command;
+}
+
 void write_text_to_buffer(void** buf, char* text) {
 
 	int len = strlen(text);

@@ -20,10 +20,6 @@
 #define BACKLOG_SIZE 10 /* Default backlog size del listener */
 #define INPUT_SIZE 512
 
-void shutdown_server(struct client_device* client_list, int fdmax) {
-
-}
-
 int main(int argc, char* argv[]) {
 	int ret, newfd, listener, i, addrlen, server_port, fdmax;
 	fd_set master, read_fds;
@@ -32,6 +28,7 @@ int main(int argc, char* argv[]) {
 	struct sockaddr_in server_addr, client_addr;
 	char *buffer, *input;
 	struct table *table_list, *temp_table;
+	struct dish *dish_list, *temp_dish;
 
 	received_client = NULL;
 	client_list = NULL;
@@ -40,14 +37,15 @@ int main(int argc, char* argv[]) {
 	input = NULL;
 	table_list = NULL;
 	temp_table = NULL;
+	dish_list = NULL;
+	temp_dish = NULL;
 
 	if(!check_port(argc, argv)) {
 		printf("Argomenti errati. Specificare correttamente il comando come segue: ./server <porta>\n");
 		exit(0);
 	}
 
-	server_port = atoi(argv[1]); /* Funziona ma fare meglio, controlli su numero di argoment, sulla porta ecc... */
-	/* Check che la porta sia formata solo da numeri e non da lettere */
+	server_port = atoi(argv[1]);
 
 	LOG_INFO("Inizializzazione del server in corso...");
 	
@@ -234,11 +232,6 @@ int main(int argc, char* argv[]) {
 							if(strncmp(buffer, "find", 4) == 0) { // Comando 'find'
 						
 								command = create_cmd_struct_find(buffer);
-								set_LOG_INFO();
-								printf("Comando ricevuto: %s %s %d %d-%d-%d %d\n", (char*)command->cmd, (char*)command->args[0], 
-									*((int*)command->args[1]), *((int*)command->args[2]), *((int*)command->args[3]), 
-									*((int*)command->args[4]), *((int*)command->args[5]));
-							
 								
 								/* Popolo struct lista tavoli prenotabili da inviare */
 								table_list = get_bookable_table(*((int*)command->args[1]), *((int*)command->args[2]), 
@@ -263,6 +256,7 @@ int main(int argc, char* argv[]) {
 								}
 								
 								while(temp_table != NULL) {
+									// DA VERIFICARE SE C'E' DA FARE UNA MALLOC DEL BUFFER QUI!
 									sprintf(buffer, "%s %s %s", &temp_table->table[0], &temp_table->room[0], &temp_table->position[0]);
 									ret = send_data(i, (void*)buffer); 
 									
@@ -343,7 +337,76 @@ int main(int argc, char* argv[]) {
 								LOG_INFO("Prenotazione effettuata");
 							}
 
-						} else if(received_client->type == KD) {
+						} else if(received_client->type == TD) {
+							LOG_INFO("Il comando è stato ricevuto da un Table Device");	
+						
+							/* Riconoscimento del comando */
+							if(strncmp(buffer, "login", 5) == 0) { // Verifica codice prenotazione
+								
+								command = create_cmd_struct_login(buffer);
+								
+								/* Verifica il booking code passato dal client.
+								 * Se il booking code esiste allora il buffer verrà valorizzato con il messaggio
+								 * BOOKING_CODE_IS_VALID altrimenti BOOKING_CODE_IS_NOT_VALID*/
+
+								verify_booking_code(command, (void*)&buffer);
+								
+								free_mem((void*)&command);	
+								
+								ret = send_data(i, (void*)buffer); 
+									
+								if(ret < 0) {
+									LOG_ERROR("Errore durante l'invio della response per la verifica del codice prenotazione");
+									delete_client_device(&client_list, i);
+									close(i);
+									FD_CLR(i, &master);
+									break;
+								}
+
+							} else if(strncmp(buffer, "menu", 4) == 0) { // Comando 'menu'
+						
+								/* Popolo la struct lista piatti da inviare */
+								dish_list = load_menu_dishes();
+							
+								/* Invio dei piatti del menu */
+								temp_dish = dish_list;
+							
+								while(temp_dish != NULL) {
+									free_mem((void*)&buffer);
+									buffer = (char*)malloc(sizeof(char) * 2048);
+
+									sprintf(buffer, "%d %s - %s", temp_dish->price, &temp_dish->identifier[0], &temp_dish->description[0]);
+									ret = send_data(i, (void*)buffer); 
+									
+									if(ret < 0) {
+										LOG_ERROR("Errore durante l'invio dei piatti del menu. Chiudo la comunicazione");
+										delete_client_device(&client_list, i);
+										close(i);
+										FD_CLR(i, &master);
+										break;
+									}
+								
+									temp_dish = temp_dish->next;
+
+									if(temp_dish == NULL) {
+										write_text_to_buffer((void*)&buffer, "END_MSG");
+										ret = send_data(i, (void*)buffer);
+										
+										if(ret < 0) {
+											set_LOG_ERROR();
+											perror("Errore durante l'invio dei piatti del menu. Chiudo la comunicazione");
+											delete_client_device(&client_list, i);
+											close(i);
+											FD_CLR(i, &master);
+											break;
+										}
+									}
+								}
+								
+								LOG_INFO("Invio dei piatti del menu completato.");
+
+							}
+						} else if(received_client->type == KD) {	
 							LOG_INFO("Il comando è stato ricevuto da un Kitchen Device");		
 						}
 					}	

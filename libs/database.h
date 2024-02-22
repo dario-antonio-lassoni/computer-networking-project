@@ -27,22 +27,38 @@ struct table {
 	struct table* next;
 };
 
+struct dish {
+	char identifier[3];
+	char description[30];
+	int price;
+	int quantity; // Campo usato solo dalla 'comanda'
+	struct dish* next;
+};
+
+
 /* BOOKING */
 struct booking* load_booking_list();
 /* Ritorna la lista di prenotazioni che hanno il time slot indicato */
 void select_booking_by_timestamp(struct booking** booking_list, int year, int month, int day, int hour);
 /* Salva il booking su file */
 int save_booking(struct cmd_struct* book_cmd, struct cmd_struct* find_cmd, struct table* table, char** code);
-
+/* Verifica che il codice di prenotazione sia valido */
+void verify_booking_code(struct cmd_struct* login_cmd, char** res);
+void free_booking_list(struct booking** list);
 
 /* TABLE_MAP */
 void print_table_list(struct table* list);
 void print_bookable_tables(struct table* list);
 int count_elements_in_table_list(struct table* list);
 struct table* load_table_list();
-/* Ritorna i tavoli prenotabili */
+/* Restituisce i tavoli prenotabili */
 struct table* get_bookable_table(int year, int month, int day, int hour, int seats); 
 void add_to_table_list(struct table** list, struct table* table);
 void free_table_list(struct table** list);
+
+/* MENU_DISHES */
+struct dish* load_menu_dishes();
+void add_to_dish_list(struct dish** list, struct dish* table);
+void print_menu_dishes(struct dish* list);
 
 #endif

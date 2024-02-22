@@ -19,6 +19,7 @@ struct client_device {
 	enum client_type type; // Tipologia di client collegato
 	struct table* bookable_table; // Copia dei tavoli prenotabili per facilitarne il recupero durante l'utilizzo del comando book
 	struct cmd_struct* find_cmd; // Copia dei parametri della find per facilitare il recupero delle informazioni relative al timeslot (book)
+//	struct dish* comanda; // Comande relative al Table Device identificato dal client_device
 	struct client_device* next; // Puntatore al prossimo client collegato della lista
 };
 
