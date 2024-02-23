@@ -32,7 +32,6 @@ struct client_device* find_client_device_by_fd(struct client_device** head, int 
 	return NULL;
 }
 
-//Nota: serve per forza il puntatore a puntatore se ci vogliamo portare dietro dal main alla funzione il puntatore principale e modificarlo
 struct client_device* find_client_device_by_port(struct client_device** head, int port) {
 	struct client_device* current = *head;
 
@@ -41,7 +40,7 @@ struct client_device* find_client_device_by_port(struct client_device** head, in
 			return current;
 		current = current->next;
 	} 
-	LOG_ERROR("La find non ha restituito nulla!");
+	
 	return NULL;
 }
 
@@ -59,6 +58,8 @@ struct client_device* create_client_device(int fd, int port, enum client_type ty
 	dev->port = port;
 	dev->type = type;
 	dev->bookable_table = NULL;
+	dev->find_cmd = NULL;
+	dev->dishes_ordered = NULL;
 	dev->next = NULL;
 	
 	return dev;
@@ -106,6 +107,8 @@ int add_client_device(struct client_device** head, struct client_device* client)
 			(*head)->port = client->port;
 			(*head)->type = client->type;
 			(*head)->bookable_table = client->bookable_table;
+			(*head)->find_cmd = NULL;
+			(*head)->dishes_ordered = NULL;
 			(*head)->next = NULL;
 		} else {
 			LOG_ERROR("Errore durante l'aggiunta del descrittore client device alla lista dei client collegati.");

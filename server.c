@@ -157,7 +157,7 @@ int main(int argc, char* argv[]) {
 						set_LOG_INFO();
 						printf("Chiusura client comunicante su porta %d rilevata\n", (*received_client).port); /* DIRE DI QUALE CLIENT SI TRATTA */	
 						fflush(stdout);
-						delete_client_device(&client_list, i); /* La free del received_client viene fatta dalla delete */
+						delete_client_device(&client_list, i); // La free del received_client viene fatta dalla delete
 						close(i);
 						FD_CLR(i, &master);
 
@@ -259,7 +259,7 @@ int main(int argc, char* argv[]) {
 									// DA VERIFICARE SE C'E' DA FARE UNA MALLOC DEL BUFFER QUI!
 									sprintf(buffer, "%s %s %s", &temp_table->table[0], &temp_table->room[0], &temp_table->position[0]);
 									ret = send_data(i, (void*)buffer); 
-									
+								
 									if(ret < 0) {
 										LOG_ERROR("Errore durante l'invio dei tavoli prenotabili. Chiudo la comunicazione");
 										delete_client_device(&client_list, i);
@@ -402,12 +402,32 @@ int main(int argc, char* argv[]) {
 										}
 									}
 								}
+
+								//free_mem dish list
 								
 								LOG_INFO("Invio dei piatti del menu completato.");
 
+							} else if(strncmp(buffer, "comanda", 7) == 0) { // Comando 'comanda'
+													
+								command = create_cmd_struct_comanda(buffer);
+								
+								/* Inserimento della comanda nella lista dei piatti ordinati dal client_device TD */
+								add_to_dish_list(&received_client->dishes_ordered, (struct dish*)(command->args[0]));
+								
+								
+								temp_dish = received_client->dishes_ordered;
+
+								while(temp_dish != NULL) {
+									printf("%s-%d ", temp_dish->identifier, temp_dish->quantity);
+									temp_dish = temp_dish->next;
+								}
+								printf("\n");
+								fflush(stdout);
+
 							}
+
 						} else if(received_client->type == KD) {	
-							LOG_INFO("Il comando è stato ricevuto da un Kitchen Device");		
+							LOG_INFO("Il comando è stato ricevuto da un Kitchen Device");	
 						}
 					}	
 				

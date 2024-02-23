@@ -197,17 +197,19 @@ struct cmd_struct* create_cmd_struct_login(char* input) {
 struct cmd_struct* create_cmd_struct_comanda(char* input) {
 	
 	int i, input_is_valid;
-	char* token;
+	char* token, *buffer;
 	struct dish* current_dish;
 
 	/* Check che la comanda contenga almeno un piatto */
 
 	input_is_valid = 0; // Se input_is_valid rimane false allora vorrà dire che non c'è almeno un piatto
+	
+	/* Creo una copia temporanea dell'input per poterla utilizzare con la strtok */
+	write_text_to_buffer((void*)&buffer, input);
 
 	/* Allocazione memoria per la cmd_struct */
 	
 	struct cmd_struct* command = (struct cmd_struct*)malloc(sizeof(struct cmd_struct));
-	command->cmd = (char*)malloc(sizeof(char) * 6); //Usare CONST DA COMMON_HEADER
 	command->args[0] = (struct dish*)malloc(sizeof(struct dish));
 	
 	current_dish = (struct dish*)(command->args[0]);
@@ -217,12 +219,9 @@ struct cmd_struct* create_cmd_struct_comanda(char* input) {
 
 	/* Popola la struct */
 
-	strcpy(command->cmd, "comanda");
+	write_text_to_buffer((void*)&command->cmd, "comanda");
 
-	//int ret = sscanf(input, "login %s", (char*)command->args[0]);
-
-			
-	token = strtok(input, " ");
+	token = strtok(buffer, " ");
 	token = strtok(NULL, " "); // Indico alla funzione strtok di saltare direttamente al primo token (" ") 
 				   // così da poter leggere la coppia nome_piatto-quantità
 
@@ -234,7 +233,7 @@ struct cmd_struct* create_cmd_struct_comanda(char* input) {
 		token = strtok(NULL, " "); // Avanzo al prossimo token
 					   
 		if(token != NULL) {
-			current_dish->next = (struct dish*)malloc(sizeof(struct dish*));
+			current_dish->next = (struct dish*)malloc(sizeof(struct dish));
 			current_dish = current_dish->next;
 		} else {
 			current_dish->next = NULL;
