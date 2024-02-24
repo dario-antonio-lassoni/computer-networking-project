@@ -35,6 +35,14 @@ struct dish {
 	struct dish* next;
 };
 
+struct comanda {
+	char table[3];
+	char com_count[COMANDA_COUNT_LEN]; // Numero della comanda relativa al tavolo
+	char state; // Stato ->  a:'in attesa', p:'in preparazione', s:'in servizio'
+	struct dish* dish_list; // Lista ordinazioni nella comanda
+	int sd; // socket descriptor del Table Device che ha inviato la comanda (lato server)
+	struct comanda* next;
+};
 
 /* BOOKING */
 struct booking* load_booking_list();
@@ -43,8 +51,9 @@ void select_booking_by_timestamp(struct booking** booking_list, int year, int mo
 /* Salva il booking su file */
 int save_booking(struct cmd_struct* book_cmd, struct cmd_struct* find_cmd, struct table* table, char** code);
 /* Verifica che il codice di prenotazione sia valido */
-void verify_booking_code(struct cmd_struct* login_cmd, char** res);
+void verify_booking_code(char* booking_code, char** res);
 void free_booking_list(struct booking** list);
+struct booking* get_booking_from_code(char* booking_code);
 
 /* TABLE_MAP */
 void print_table_list(struct table* list);
@@ -58,7 +67,10 @@ void free_table_list(struct table** list);
 
 /* MENU_DISHES */
 struct dish* load_menu_dishes();
-void add_to_dish_list(struct dish** list, struct dish* table);
+void add_to_dish_list(struct dish** list, struct dish* dish); // ORMAI DA ELIMINARE?
 void print_menu_dishes(struct dish* list);
+
+/* COMANDA */
+void add_to_comanda_list(struct comanda** list, struct comanda* comanda);
 
 #endif

@@ -234,8 +234,8 @@ int main(int argc, char* argv[]) {
 			
 			/* Comando 'comanda' con i piatti in una lista puntata di dish su arg0 di command */	
 			
-			command = create_cmd_struct_comanda(input);
-				
+			command = create_cmd_struct_comanda(input, NULL, -1);
+			
 			if(command == NULL) {
 				printf("Sintassi del comando 'comanda' è errata.\n");
 				printf("Sintassi: comanda {<piatto_1-quantità_1> <piatto_2-quantità_2> ... <piatto_n-quantità_n>}\n");
@@ -253,21 +253,6 @@ int main(int argc, char* argv[]) {
 
 			/* Pongo la comanda in lista di attesa */
 			
-			//command contenente:
-			//cmd: comanda
-			//args[0]: comX dove X è il numero della comanda
-			//args[2]: list dish* con i piatti
-
-			//Quando la comanda arriva al kitchen device, lui invia lo stato in attesa al server che a sua volta la invia al TD
-			//Quindi il TD visualizza la comanda nello stato "in attesa" a schermo (si può già simulare solo con il server)
-			//Stessa cosa quando la comanda passa in preparazione (anche questo si può subito simulare con il server)
-				
-			//Quando tutti i piatti della comanda sono pronti, il cuoco lo segnala tramite il kitchen device il quale invia un
-			//messaggio al server che lo inoltra al table device: la comanda passa nello stato "in servizio" (anche questo simulabile)
-
-			//Questo meccanismo si ripete fino al termine del pasto (richiesta del conto). Le informazioni relative alle
-			//La richiesta del conto si può fare solo quando tutte le comande sono passate nello stato "in servizio"
-
 
 		} else {	
 			printf("Comando errato. Utilizzare solo i comandi consentiti\n");

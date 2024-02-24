@@ -5,3 +5,24 @@ valgrind -s --leak-check=full --show-leak-kinds=all --track-origins=yes ./cli 12
 
 - Valutare se  inserire un check quando diversi client fanno richiesta della book sulla stessa data e restano contemporaneamente nello stato pending (fatta la find ma non ancora fatta la book)
 	ciò porterebbe alla possibilità di diversi client di prenotare per lo stesso timeslot lo stesso tavolo, perché non viene fatto un check
+
+
+LOGICA TD - SERVER - KD
+
+TD Invia cmd_struct comanda al server contenente
+cmd = comanda
+args[0] = dish_list
+
+Il server ricevuta la comanda arrichisca il cmd_struct con un ulteriore argomento
+comanda->table = numero tavolo
+comanda->fd = socket descriptor del tavolo
+
+
+Lato server per ogni comanda ricevuta viene creata
+
+Server invia a KD:
+Kd riceve richiesta
+
+
+
+

@@ -94,7 +94,7 @@ char* create_booking_code(char* table, int day, int month, int year, int hour) {
 	return booking_code;	
 }
 
-void verify_booking_code(struct cmd_struct* command, char** res) {
+void verify_booking_code(char* booking_code, char** res) {
 	
 	int found;
 	struct booking *list, *curr;
@@ -104,7 +104,7 @@ void verify_booking_code(struct cmd_struct* command, char** res) {
 	curr = list;
 
 	while(curr != NULL) {
-		if(strcmp(curr->booking_code, (char*)command->args[0]) == 0) {
+		if(strcmp(curr->booking_code, booking_code) == 0) {
 			write_text_to_buffer((void**)res, "BOOKING_CODE_IS_VALID");
 			found = 1;
 			break;
@@ -115,8 +115,38 @@ void verify_booking_code(struct cmd_struct* command, char** res) {
 	if(found == 0) 
 		write_text_to_buffer((void**)res, "BOOKING_CODE_IS_NOT_VALID");
 
-	free_booking_list((void*)&list);	
-	// Libera memoria allocata per la lista
+	/* Libera memoria allocata per la lista */
+	free_booking_list(&list);	
+}
+
+struct booking* get_booking_from_code(char* booking_code) {
+	
+	struct booking *list, *prec, *curr;
+	
+	list = load_booking_list();
+	curr = list;
+	prec = NULL;
+
+	while(curr != NULL) {
+		if(strcmp(curr->booking_code, booking_code) == 0) 
+			break;
+		prec = curr;
+		curr = curr->next;
+	}
+
+	if(curr != NULL) { // Se il codice di prenotazione è stato trovato
+			   
+		if(prec == NULL) { // Il booking è il primo della lista
+			list = curr->next;
+		} else { 
+			prec->next = curr->next;
+		}
+
+	}
+
+	free_booking_list(&list);
+
+	return curr;
 }
 
 struct booking* load_booking_list() {
@@ -438,6 +468,40 @@ void add_to_table_list(struct table** list, struct table* table) {
 	/* Inserisco in coda */
 	curr->next = table;
 
+}
+
+void add_to_comanda_list(struct comanda** list, struct comanda* comanda) {
+	
+	struct comanda* curr;
+	int i;
+	
+ 	/* Init del contatore delle comande */	
+	i = 1;
+
+	/* Inserisco la comanda in testa se è la prima in lista */
+	if(*list == NULL) {
+		
+		/* Set del numero della comanda */	
+		sprintf(comanda->com_count, "com%d", i);
+		
+		*list = comanda;
+		return;
+	} 
+	
+	/* Avanzo fino alla coda della lista */
+	curr = *list;
+	i++;
+
+	while(curr->next != NULL) {
+		curr = curr->next;
+		i++;
+	}
+	
+	/* Set del numero della comanda */
+	sprintf(comanda->com_count, "com%d", i);
+
+	/* Inserisco in coda */
+	curr->next = comanda;
 }
 
 void free_table_list(struct table** list) {

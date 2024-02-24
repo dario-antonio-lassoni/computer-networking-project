@@ -349,11 +349,19 @@ int main(int argc, char* argv[]) {
 								 * Se il booking code esiste allora il buffer verrà valorizzato con il messaggio
 								 * BOOKING_CODE_IS_VALID altrimenti BOOKING_CODE_IS_NOT_VALID*/
 
-								verify_booking_code(command, (void*)&buffer);
+								verify_booking_code(
+										(char*)command->args[0], // args[0]: Contiene il booking code nella command 'login'
+										(void*)&buffer);
 								
-								free_mem((void*)&command);	
+								received_client->booking = get_booking_from_code((char*)command->args[0]); // args[0]: Contiene il booking code nella command 'login'
 								
-								ret = send_data(i, (void*)buffer); 
+								set_LOG_INFO();
+								printf("Si è collegato il TD associato alla prenotazione %s, tavolo: %s\n", (char*)command->args[0], (received_client->booking)->table);
+								fflush(stdout);
+
+								free_mem((void*)&command);
+								
+								ret = send_data(i, (void*)buffer);
 									
 								if(ret < 0) {
 									LOG_ERROR("Errore durante l'invio della response per la verifica del codice prenotazione");
@@ -408,19 +416,28 @@ int main(int argc, char* argv[]) {
 								LOG_INFO("Invio dei piatti del menu completato.");
 
 							} else if(strncmp(buffer, "comanda", 7) == 0) { // Comando 'comanda'
-													
-								command = create_cmd_struct_comanda(buffer);
 								
+								command = create_cmd_struct_comanda(buffer, (received_client->booking)->table, received_client->fd);
+							
+								/* Aggiunta delle comanda nella lista delle comande */
+								add_to_comanda_list( // Si occupa anche di incremenare il contatore delle comande!!!
+										&received_client->comande, // Lista delle comande relative al Table Device che ha inviato la comanda
+										(struct comanda*)command->args[0] // Nuova comanda da aggiungere
+										);
+
 								/* Inserimento della comanda nella lista dei piatti ordinati dal client_device TD */
-								add_to_dish_list(&received_client->dishes_ordered, (struct dish*)(command->args[0]));
+								//add_to_dish_list(&received_client->dishes_ordered, ((struct comanda*)(command->args[0]))->dish_list);
 								
-								
-								temp_dish = received_client->dishes_ordered;
+								/* Invia la notifica al TD per segnalare lo stato di attesa per la comanda
+								 * appena ricevuta dal KD */
+
+								temp_dish = ((struct comanda*)command->args[0])->dish_list;
 
 								while(temp_dish != NULL) {
-									printf("%s-%d ", temp_dish->identifier, temp_dish->quantity);
+									printf("%s-%d", temp_dish->identifier, temp_dish->quantity);
 									temp_dish = temp_dish->next;
 								}
+
 								printf("\n");
 								fflush(stdout);
 

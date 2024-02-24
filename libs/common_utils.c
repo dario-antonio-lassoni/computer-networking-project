@@ -194,36 +194,45 @@ struct cmd_struct* create_cmd_struct_login(char* input) {
 	return command;
 }
 
-struct cmd_struct* create_cmd_struct_comanda(char* input) {
+struct cmd_struct* create_cmd_struct_comanda(char* input, char* table, int sd_td) {
 	
 	int i, input_is_valid;
 	char* token, *buffer;
 	struct dish* current_dish;
+	struct comanda* comanda;
+	struct cmd_struct* command;
 
 	/* Check che la comanda contenga almeno un piatto */
+	input_is_valid = 0; // Se input_is_valid rimane false allora vorrà dire che non c'è almeno un piatto nella comanda
 
-	input_is_valid = 0; // Se input_is_valid rimane false allora vorrà dire che non c'è almeno un piatto
-	
 	/* Creo una copia temporanea dell'input per poterla utilizzare con la strtok */
 	write_text_to_buffer((void*)&buffer, input);
 
 	/* Allocazione memoria per la cmd_struct */
-	
-	struct cmd_struct* command = (struct cmd_struct*)malloc(sizeof(struct cmd_struct));
-	command->args[0] = (struct dish*)malloc(sizeof(struct dish));
-	
-	current_dish = (struct dish*)(command->args[0]);
-	
+	command = (struct cmd_struct*)malloc(sizeof(struct cmd_struct));
+	command->args[0] = (struct comanda*)malloc(sizeof(struct comanda));
+	comanda = (struct comanda*)command->args[0];
+	current_dish = (struct dish*)malloc(sizeof(struct dish));
+	((struct comanda*)command->args[0])->dish_list = current_dish;
+
 	for(i = 1; i < 6; i++)
 		command->args[i] = NULL;
 
 	/* Popola la struct */
-
 	write_text_to_buffer((void*)&command->cmd, "comanda");
+	
+	if(table != NULL)
+		strcpy(comanda->table, table);
+
+	comanda->sd = sd_td; // Socket Descriptor del Table Device (lato server) 
+	
+	
+	//((struct comanda*)command->args[0])->next = NULL;	
+	comanda->next = NULL;
 
 	token = strtok(buffer, " ");
 	token = strtok(NULL, " "); // Indico alla funzione strtok di saltare direttamente al primo token (" ") 
-				   // così da poter leggere la coppia nome_piatto-quantità
+				   // così da poter leggere la prima coppia nome_piatto-quantità
 
 	while (token != NULL && sscanf(token, "%2s-%d", current_dish->identifier, &current_dish->quantity) == 2) {
 		
