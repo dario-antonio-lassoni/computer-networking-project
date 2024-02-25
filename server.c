@@ -408,7 +408,7 @@ int main(int argc, char* argv[]) {
 									delete_client_device(&client_list, i);
 									close(i);
 									FD_CLR(i, &master);
-									break;
+									continue;
 								}
 
 							} else if(strncmp(buffer, "menu", 4) == 0) { // Comando 'menu'
@@ -462,43 +462,51 @@ int main(int argc, char* argv[]) {
 								/* Setta lo stato della comanda 'in attesa' */
 								((struct comanda*)command->args[0])->state = 'a';
 
+								/* Check che la comanda contenga solo piatti che fanno parte del menu del giorno */
+								temp_dish = ((struct comanda*)command->args[0])->dish_list;
+								ret = check_dishes(temp_dish);
+								
+								if(ret < 0) {
+									LOG_WARN("La comanda contiene piatti non presenti nel menu. Invio segnalazione al Table Device");
+
+									write_text_to_buffer((void*)&buffer, "DISH_NOT_PRESENT");	
+									ret = send_data(i, (void*)buffer);
+								
+									if(ret < 0) {
+										set_LOG_ERROR();
+										perror("Errore durante la comunicazione con il TD. Chiudo la comunicazione");
+										delete_client_device(&client_list, i);
+										close(i);
+										FD_CLR(i, &master);
+									}
+
+									continue;
+								}
+
 								/* Aggiunta delle comanda nella lista delle comande */
-								add_to_comanda_list( // Si occupa anche di incremenare il contatore delle comande!!!
+								add_to_orders_list( // Si occupa anche di incremenare il contatore delle comande!!!
 										&received_client->comande, // Lista delle comande relative al Table Device che ha inviato la comanda
 										(struct comanda*)command->args[0] // Nuova comanda da aggiungere
-										);	
+										);
+
+								/* Invio segnalazione al TD per comanda ricevuta */
 								
+								write_text_to_buffer((void*)&buffer, "ORDER_RECEIVED");
+								ret = send_data(i, (void*)buffer);
+								
+								if(ret < 0) {
+									set_LOG_ERROR();
+									perror("Errore durante l'invio segnalazione per comanda ricevuta. Chiudo la comunicazione");
+									delete_client_device(&client_list, i);
+									close(i);
+									FD_CLR(i, &master);
+									continue;
+								}
 								
 								/* Inserimento della comanda nella lista dei piatti ordinati dal client_device TD */
 								//add_to_dish_list(&received_client->dishes_ordered, ((struct comanda*)(command->args[0]))->dish_list);
 								// Da ccancellare!
 
-								/* Invia la notifica al TD per segnalare lo stato di attesa per la comanda appena ricevuta */
-								
-								//sscanf(buffer, "Stato comanda com1 contenente i piatti:\n %d %u", &(received_client->port), &(received_client->type));
-
-								//write_text_to_buffer((void*)&buffer, "Stato comanda com1: );
-								/*
-								 ret = send_data(i, (void*)buffer);
-										
-								if(ret < 0) {
-									set_LOG_ERROR();
-									perror("Errore durante l'invio dello stato della comanda. Chiudo la comunicazione");
-									delete_client_device(&client_list, i);
-									close(i);
-									FD_CLR(i, &master);
-									break;
-								}
-								*/
-								temp_dish = ((struct comanda*)command->args[0])->dish_list;
-
-								while(temp_dish != NULL) {
-									printf("%s-%d", temp_dish->identifier, temp_dish->quantity);
-									temp_dish = temp_dish->next;
-								}
-
-								printf("\n");
-								fflush(stdout);
 
 							}
 

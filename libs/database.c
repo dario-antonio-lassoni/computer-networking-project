@@ -514,6 +514,62 @@ struct table* get_bookable_table(int seats, int day, int month, int year, int ho
 }
 
 
+int check_dishes(struct dish* list) {
+
+	struct dish* menu_dishes = load_menu_dishes();	
+	struct dish* curr_input, *curr;
+	int not_found; 
+
+	menu_dishes = load_menu_dishes();
+	curr = menu_dishes;
+	curr_input = list;
+	not_found = 0; // Se uguale a 1 indica che non è stato trovato un piatto nel menu
+
+	if(menu_dishes == NULL) {
+		//free_mem
+		LOG_ERROR("Errore: il menu' è vuoto");
+		return -1;
+	}
+
+	if(curr_input == NULL) {
+		//free_mem
+		LOG_ERROR("Errore: la comanda non contiene piatti");
+		return -1;
+	}
+
+	while(curr_input != NULL) {
+		while(curr != NULL) {
+			
+			if(strcmp(curr_input->identifier, curr->identifier) == 0)
+				break;
+
+			/* Se è l'ultimo piatto nel menu che stiamo comparando 
+			 * con quello di input, e non è presente nel menu */
+			else if(curr->next == NULL)
+				not_found = 1;
+		
+			curr = curr->next;
+
+		}
+		
+		if(not_found == 1)
+			break;
+
+		curr_input = curr_input->next;
+		curr = menu_dishes;
+	}
+
+
+	//free_mem
+	if(not_found == 1) {
+		return -1;
+	}
+
+	return 0;
+
+
+}
+
 void add_to_dish_list(struct dish** list, struct dish* dish) {
 	
 	struct dish* curr;
@@ -556,7 +612,7 @@ void add_to_table_list(struct table** list, struct table* table) {
 
 }
 
-void add_to_comanda_list(struct comanda** list, struct comanda* comanda) {
+void add_to_orders_list(struct comanda** list, struct comanda* comanda) {
 	
 	struct comanda* curr;
 	int i;

@@ -70,9 +70,11 @@ void free_table_list(struct table** list);
 struct dish* load_menu_dishes();
 void add_to_dish_list(struct dish** list, struct dish* dish); // ORMAI DA ELIMINARE?
 void print_menu_dishes(struct dish* list);
+/* Controlla che la comanda contenga solo piatti presenti nel menu del giorno */
+int check_dishes(struct dish* list);
 
 /* COMANDA */
-void add_to_comanda_list(struct comanda** list, struct comanda* comanda);
+void add_to_orders_list(struct comanda** list, struct comanda* comanda);
 void print_all_orders(struct comanda* list);
 void print_orders_by_state(struct comanda* list, char state);
 void print_orders_by_table(struct comanda* list, char* table);

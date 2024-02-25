@@ -251,8 +251,22 @@ int main(int argc, char* argv[]) {
 				exit(1);
 			}
 
-			/* Pongo la comanda in lista di attesa */
+			/* Attesa response avvenuta ricezione comanda */
 			
+			ret = receive_data(sd, (void*)&buffer);
+	
+			if(ret < 0) {
+				perror("Errore durante l'attesa di ricezione\n");
+				exit(1);
+			}
+	
+			if(strcmp("ORDER_RECEIVED", buffer) == 0) {
+				printf("COMANDA RICEVUTA\n");
+			} else if(strcmp("DISH_NOT_PRESENT", buffer) == 0) {
+				printf("Nella comanda sono presenti piatti che non fanno parte del menu\n");
+			} else {
+				printf("Errore in fase di ricezione response per avvenuta ricezione comanda\n");
+			}
 
 		} else {	
 			printf("Comando errato. Utilizzare solo i comandi consentiti\n");
