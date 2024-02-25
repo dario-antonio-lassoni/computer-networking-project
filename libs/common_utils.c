@@ -201,6 +201,7 @@ struct cmd_struct* create_cmd_struct_comanda(char* input, char* table, int sd_td
 	struct dish* current_dish;
 	struct comanda* comanda;
 	struct cmd_struct* command;
+	time_t now; // Timestamp attuale
 
 	/* Check che la comanda contenga almeno un piatto */
 	input_is_valid = 0; // Se input_is_valid rimane false allora vorrà dire che non c'è almeno un piatto nella comanda
@@ -224,9 +225,10 @@ struct cmd_struct* create_cmd_struct_comanda(char* input, char* table, int sd_td
 	if(table != NULL)
 		strcpy(comanda->table, table);
 
+	time(&now); // Ricavo timestamp attuale
+	comanda->timestamp = now; // Set dell'istante in cui è arrivata la comanda al server
 	comanda->sd = sd_td; // Socket Descriptor del Table Device (lato server) 
-	
-	
+		
 	//((struct comanda*)command->args[0])->next = NULL;	
 	comanda->next = NULL;
 

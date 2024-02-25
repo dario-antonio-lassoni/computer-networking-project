@@ -41,6 +41,7 @@ struct comanda {
 	char state; // Stato ->  a:'in attesa', p:'in preparazione', s:'in servizio'
 	struct dish* dish_list; // Lista ordinazioni nella comanda
 	int sd; // socket descriptor del Table Device che ha inviato la comanda (lato server)
+	time_t timestamp; // Istante in cui è stato effettuato l'ordine dal Table Device	
 	struct comanda* next;
 };
 
