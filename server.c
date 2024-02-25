@@ -23,7 +23,7 @@
 int main(int argc, char* argv[]) {
 	int ret, newfd, listener, i, addrlen, server_port, fdmax;
 	fd_set master, read_fds;
-	struct client_device *received_client, *client_list;
+	struct client_device *received_client, *client_list, *temp_client;
 	struct cmd_struct* command;	
 	struct sockaddr_in server_addr, client_addr;
 	char *buffer, *input;
@@ -32,6 +32,7 @@ int main(int argc, char* argv[]) {
 
 	received_client = NULL;
 	client_list = NULL;
+	temp_client = NULL;
 	command = NULL;
 	buffer = NULL;
 	input = NULL;
@@ -136,8 +137,47 @@ int main(int argc, char* argv[]) {
 					
 						exit(0);
 	
-					}
+					} else if(strncmp(input, "stat", 4) == 0) {
+						
+						// Valutare se spostare tutte queste in funzioni apposite in libreria esterna
+						temp_client = client_list;
 
+						buffer = (char*)malloc(sizeof(char) * TABLE_LEN);
+						
+						/* stat: Restituisce lo stato di tutte le comande giornaliere */
+						if(strcmp(input, "stat\n") == 0) {
+							while(temp_client != NULL) {
+								print_all_orders(temp_client->comande);
+								temp_client = temp_client->next;
+							}
+						} 	
+						/* stat <status>: Restituisce tutte le comande in corso con lo stato indicato */
+						else if(strcmp(input, "stat a\n") == 0) { // stato 'in attesa'
+							while(temp_client != NULL) {
+								print_orders_by_state(temp_client->comande, 'a');
+								temp_client = temp_client->next;
+							}
+						} else if(strcmp(input, "stat p\n") == 0) {	
+							while(temp_client != NULL) {
+								print_orders_by_state(temp_client->comande, 'p');
+								temp_client = temp_client->next;
+							}
+						} else if(strcmp(input, "stat s\n") == 0) {	
+							while(temp_client != NULL) {
+								print_orders_by_state(temp_client->comande, 's');
+								temp_client = temp_client->next;
+							}
+						}
+						/* stat <table>: Restituisce tutte le comande relative al tavolo table */
+						else if(sscanf(input, "stat %s", buffer) == 1) {
+							while(temp_client != NULL) {
+								print_orders_by_table(temp_client->comande, buffer);
+								temp_client = temp_client->next;
+							}
+						}
+
+						free_mem((void*)&buffer);
+					}
 				} else if(i == listener) {
 
 					LOG_INFO("Nuovo client rilevato, connessione in corso...");
@@ -419,18 +459,37 @@ int main(int argc, char* argv[]) {
 								
 								command = create_cmd_struct_comanda(buffer, (received_client->booking)->table, received_client->fd);
 							
+								/* Setta lo stato della comanda 'in attesa' */
+								((struct comanda*)command->args[0])->state = 'a';
+
 								/* Aggiunta delle comanda nella lista delle comande */
 								add_to_comanda_list( // Si occupa anche di incremenare il contatore delle comande!!!
 										&received_client->comande, // Lista delle comande relative al Table Device che ha inviato la comanda
 										(struct comanda*)command->args[0] // Nuova comanda da aggiungere
-										);
-
+										);	
+								
+								
 								/* Inserimento della comanda nella lista dei piatti ordinati dal client_device TD */
 								//add_to_dish_list(&received_client->dishes_ordered, ((struct comanda*)(command->args[0]))->dish_list);
-								
-								/* Invia la notifica al TD per segnalare lo stato di attesa per la comanda
-								 * appena ricevuta dal KD */
+								// Da ccancellare!
 
+								/* Invia la notifica al TD per segnalare lo stato di attesa per la comanda appena ricevuta */
+								
+								//sscanf(buffer, "Stato comanda com1 contenente i piatti:\n %d %u", &(received_client->port), &(received_client->type));
+
+								//write_text_to_buffer((void*)&buffer, "Stato comanda com1: );
+								/*
+								 ret = send_data(i, (void*)buffer);
+										
+								if(ret < 0) {
+									set_LOG_ERROR();
+									perror("Errore durante l'invio dello stato della comanda. Chiudo la comunicazione");
+									delete_client_device(&client_list, i);
+									close(i);
+									FD_CLR(i, &master);
+									break;
+								}
+								*/
 								temp_dish = ((struct comanda*)command->args[0])->dish_list;
 
 								while(temp_dish != NULL) {

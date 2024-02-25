@@ -1,28 +1,13 @@
 CMD VALGRIND:
 valgrind -s --leak-check=full --show-leak-kinds=all --track-origins=yes ./cli 123
 
+- fare comando stat su server
+- check che un td con un codice prenotazione non sia già collegato (non possonoe sserci 2 td con la stessa prenotazione)
+
+- iniziare ad implementare il kd
 - Incrementare su booking e table la lunghezza di table da 3 a 4 char (così da poter avere tavoli formati da 3 caratteri, T10, T11 ecc...)	
 
 - Valutare se  inserire un check quando diversi client fanno richiesta della book sulla stessa data e restano contemporaneamente nello stato pending (fatta la find ma non ancora fatta la book)
 	ciò porterebbe alla possibilità di diversi client di prenotare per lo stesso timeslot lo stesso tavolo, perché non viene fatto un check
-
-
-LOGICA TD - SERVER - KD
-
-TD Invia cmd_struct comanda al server contenente
-cmd = comanda
-args[0] = dish_list
-
-Il server ricevuta la comanda arrichisca il cmd_struct con un ulteriore argomento
-comanda->table = numero tavolo
-comanda->fd = socket descriptor del tavolo
-
-
-Lato server per ogni comanda ricevuta viene creata
-
-Server invia a KD:
-Kd riceve richiesta
-
-
 
 

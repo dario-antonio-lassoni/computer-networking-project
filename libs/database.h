@@ -12,7 +12,7 @@
 #include "common_header.h"
 
 struct booking {
-	char table[3];
+	char table[TABLE_LEN];
 	struct tm timeinfo;
 	char surname[20];
 	char booking_code[10];
@@ -20,7 +20,7 @@ struct booking {
 };
 
 struct table {
-	char table[3];	
+	char table[TABLE_LEN];	
 	int seats;
 	char room[10];
 	char position[20];
@@ -36,7 +36,7 @@ struct dish {
 };
 
 struct comanda {
-	char table[3];
+	char table[TABLE_LEN];
 	char com_count[COMANDA_COUNT_LEN]; // Numero della comanda relativa al tavolo
 	char state; // Stato ->  a:'in attesa', p:'in preparazione', s:'in servizio'
 	struct dish* dish_list; // Lista ordinazioni nella comanda
@@ -72,5 +72,8 @@ void print_menu_dishes(struct dish* list);
 
 /* COMANDA */
 void add_to_comanda_list(struct comanda** list, struct comanda* comanda);
+void print_all_orders(struct comanda* list);
+void print_orders_by_state(struct comanda* list, char state);
+void print_orders_by_table(struct comanda* list, char* table);
 
 #endif

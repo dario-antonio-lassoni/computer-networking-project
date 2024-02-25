@@ -62,6 +62,92 @@ void print_menu_dishes(struct dish* list) {
 	}
 }
 
+
+void print_dish_list(struct dish* list) {
+	
+	struct dish* curr = list;
+	
+	while(curr != NULL) {	
+		printf("%s %d\n", curr->identifier, curr->quantity);	
+		fflush(stdout);
+		curr = curr->next;
+	}
+}
+
+void print_all_orders(struct comanda* list) {
+	
+	struct comanda* curr = list;
+
+	while(curr != NULL) {
+		printf("%s %s ", curr->com_count, curr->table);
+
+		if(curr->state == 'a') { // Comande in attesa
+			printf("<in attesa>\n");
+		} else if(curr->state == 'p') { // Comande in preparazione
+			printf("<in preparazine>\n");
+		} else if(curr->state == 's') { // Comande in servizio
+			printf("<in servizio>\n");
+		}
+
+		print_dish_list(curr->dish_list);
+		fflush(stdout);
+
+		curr = curr->next;
+	}
+
+}
+
+void print_orders_by_state(struct comanda* list, char state) {
+	
+	struct comanda* curr = list;
+	char* curr_table = "\0";
+	char* curr_com_count = "\0";
+
+	while(curr != NULL) {
+		
+		if((curr->state == 'a' && state == 'a') ||
+		   (curr->state == 'p' && state == 'p') ||
+		   (curr->state == 's' && state == 's')) {
+			
+			if((strcmp(curr->com_count, curr_com_count) != 0) ||
+			   (strcmp(curr_table, curr->table) != 0)) { // Stampo la coppia numero comanda e tavolo solo una volta
+				printf("%s %s\n", curr->com_count, curr->table);
+			}
+
+			print_dish_list(curr->dish_list);
+		}
+
+		fflush(stdout);
+		curr = curr->next;
+		curr_table = curr->table;
+	}
+}
+
+void print_orders_by_table(struct comanda* list, char* table) {
+
+	struct comanda* curr = list;
+
+	while(curr != NULL) {
+		if(strcmp(curr->table, table) == 0) {
+			printf("%s ", curr->com_count);
+
+			if(curr->state == 'a') { // Comande in attesa
+				printf("<in attesa>\n");
+			} else if(curr->state == 'p') { // Comande in preparazione
+				printf("<in preparazine>\n");
+			} else if(curr->state == 's') { // Comande in servizio
+				printf("<in servizio>\n");
+			}
+
+			print_dish_list(curr->dish_list);
+			fflush(stdout);
+		}
+
+		curr = curr->next;
+	}
+
+}
+
 int count_elements_in_table_list(struct table* list) {
 	
 	struct table* curr;

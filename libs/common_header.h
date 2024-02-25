@@ -11,6 +11,7 @@
 #define BOOKING_CODE_LEN 10
 #define CMD_LOGIN_LEN 16
 #define COMANDA_COUNT_LEN 7 // Numero massimo possibile di comande: 999 <strlen('com' + '999')>
+#define TABLE_LEN 3
 
 struct cmd_struct {
 	char* cmd;
