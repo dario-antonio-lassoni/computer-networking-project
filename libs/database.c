@@ -670,6 +670,42 @@ void add_to_orders_list_with_increment(struct comanda** list, struct comanda* co
 	curr->next = comanda;
 }
 
+int delete_from_orders_list(struct comanda** list, char* com_count, char* table) {
+
+	struct comanda *prec, *curr;
+
+	if(*list == NULL)
+		return -1; // Se la lista da cui si vuole tentare la rimozione della comanda è vuota
+
+	prec = NULL;
+	curr = *list;
+
+	while(curr != NULL) {
+		
+		if(strcmp(curr->com_count, com_count) == 0 && strcmp(curr->table, table) == 0)
+			break;
+
+		prec = curr;
+		curr = curr->next;
+
+	}
+
+	if(curr == NULL)
+		return 0; // Se la comanda non è stata trovata
+	
+	/* Eliminazione della comanda */
+
+	if(prec == NULL) { // La comanda è la prima in lista
+		*list = (*list)->next;
+	} else {
+		prec->next = curr->next;
+	}
+
+	free_mem((void*)&curr);
+
+	return 1; // Comanda trovata ed eliminata
+}
+
 /* Restituisce la comanda meno recente ancora in attesa */
 struct comanda* get_oldest_order_in_pending(struct client_device* list) {
 
@@ -715,6 +751,27 @@ struct comanda* get_oldest_order_in_pending(struct client_device* list) {
 
 	return oldest_order;
 }
+
+struct comanda* find_order_in_orders_list(struct comanda* list, char* com_count, char* table) {
+	
+	struct comanda* curr;
+
+	if(list == NULL)
+		return NULL;
+
+	curr = list;
+
+	while(curr != NULL) {
+		
+		if(strcmp(curr->com_count, com_count) == 0 && strcmp(curr->table, table) == 0) {
+			break;
+		}
+		
+		curr = curr->next;
+	}
+
+	return curr;
+}	
 
 void free_dish_list(struct dish** list) {
 	

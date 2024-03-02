@@ -275,6 +275,10 @@ int main(int argc, char* argv[]) {
 						
 								command = create_cmd_struct_find(buffer);
 								
+								if(command == NULL) {
+									LOG_ERROR("Struttura della find errata!");
+								}	
+
 								/* Popolo struct lista tavoli prenotabili da inviare */
 								table_list = get_bookable_table(*((int*)command->args[1]), *((int*)command->args[2]), 
 										*((int*)command->args[3]), *((int*)command->args[4]), *((int*)command->args[5]));
@@ -641,6 +645,68 @@ int main(int argc, char* argv[]) {
 								
 								LOG_INFO("Invio della comanda meno recente in stato di attesa completato.");
 
+							} if(strncmp(buffer, "ready", 4) == 0) { // Comando 'ready'
+								
+								command = create_cmd_struct_ready(buffer);
+								
+								if(command == NULL) {
+									LOG_ERROR("Struttura della ready errata!");
+								}
+
+								/* Ricerca della comanda */
+								
+								temp_client = client_list;
+
+								while(temp_client != NULL) {
+									
+									temp_order = find_order_in_orders_list(temp_client->comande,
+											(char*)command->args[0],  // com_count
+											(char*)command->args[1]); // table
+
+									if(temp_order != NULL) {
+										break;
+									}
+
+									temp_client = temp_client->next;
+								}
+
+								if(temp_order == NULL) {
+									write_text_to_buffer((void*)buffer, "ERR_CHG_STATE");
+									LOG_ERROR("Errore durante il cambio di stato della comanda!");
+
+									ret = send_data(i, (void*)buffer); 
+									
+									if(ret < 0) {
+										LOG_ERROR("Errore durante l'invio del messaggio");
+										delete_client_device(&client_list, i);
+										close(i);
+										FD_CLR(i, &master);
+										break;
+									}
+								
+									continue;
+								}
+
+								/* Set della comanda 'in servizio' */
+								temp_order->state = 's';
+
+								write_text_to_buffer((void*)&buffer, "OK_CHG_STATE");
+
+								ret = send_data(i, (void*)buffer); 
+									
+								if(ret < 0) {
+									LOG_ERROR("Errore durante l'invio del messaggio");
+									delete_client_device(&client_list, i);
+									close(i);
+									FD_CLR(i, &master);
+									break;
+								}
+
+								set_LOG_INFO();
+								printf("Comanda %s-%s in servizio!\n", 
+									(char*)command->args[0],  // com_count
+									(char*)command->args[1]); // table
+								fflush(stdout);
 							}
 						}
 					}	

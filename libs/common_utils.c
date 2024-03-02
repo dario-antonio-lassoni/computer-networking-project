@@ -263,6 +263,39 @@ struct cmd_struct* create_cmd_struct_comanda(char* input, char* table, int sd_td
 	return command;
 }
 
+struct cmd_struct* create_cmd_struct_ready(char* input) {	
+
+	int i;
+
+	/* Allocazione memoria per la cmd_struct */
+	
+	struct cmd_struct* command = (struct cmd_struct*)malloc(sizeof(struct cmd_struct));
+	command->cmd = (char*)malloc(sizeof(char) * 6); // Usare CONST
+	command->args[0] = (char*)malloc(sizeof(char) * COMANDA_COUNT_LEN);
+	command->args[1] = (char*)malloc(sizeof(char) * TABLE_LEN);
+
+	for(i = 2; i < 6; i++)
+		command->args[i] = NULL;
+
+	/* Popola la struct */
+
+	strcpy(command->cmd, "ready");
+
+	int ret = sscanf(input, "ready %[^-]-%[^\n]", 
+			(char*)command->args[0],  // com_count
+			(char*)command->args[1]); // table
+
+	if(ret != 2) {
+		free_mem((void*)&command->cmd);
+		free_mem((void*)&command->args[0]);
+		free_mem((void*)&command->args[1]);
+		free_mem((void*)&command);
+		return NULL;
+	}
+
+	return command;
+}
+
 void write_text_to_buffer(void** buf, char* text) {
 
 	int len = strlen(text);

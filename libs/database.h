@@ -79,6 +79,8 @@ char* get_total_cost_by_dish_list(struct dish* list);
 void add_to_orders_list(struct comanda** list, struct comanda* comanda);
 /* Prima di aggiungere in lista si occupa di incrementare il contatore della comanda */
 void add_to_orders_list_with_increment(struct comanda** list, struct comanda* comanda);
+int delete_from_orders_list(struct comanda** list, char* com_count, char* table);
+struct comanda* find_order_in_orders_list(struct comanda* list, char* com_count, char* table);
 void print_all_orders(struct comanda* list);
 void print_orders_by_state(struct comanda* list, char state);
 void print_orders_by_table(struct comanda* list, char* table);

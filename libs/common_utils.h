@@ -12,10 +12,13 @@
 #include "common_header.h"
 
 int check_port(int argc, char* argv[]);
+
+/* Funzioni per creare la cmd_struct corrispondente per ogni comando */
 struct cmd_struct* create_cmd_struct_find(char* input);
 struct cmd_struct* create_cmd_struct_book(char* input, struct table* list);
 struct cmd_struct* create_cmd_struct_login(char* input);
 struct cmd_struct* create_cmd_struct_comanda(char* input, char* table, int sd_td);
+struct cmd_struct* create_cmd_struct_ready(char* input);
 /* Scrive il testo indicato sul buffer, riallocandolo con la lunghezza corretta */
 void write_text_to_buffer(void** buf, char* text);
 /* Send indipendente dalla dimensione del messaggio e che utilizza il Text Protocol */

@@ -35,23 +35,21 @@ int main(int argc, char* argv[]) {
 	struct sockaddr_in srv_addr;
 	struct client_device cli_dev;
 	char *input, *buffer;
-	struct cmd_struct* command;
 	struct table *table_list, *temp_table;
-	struct dish *dish_list, *temp_dish;
-	struct comanda *in_preparation, *in_service, *curr_order;
+	struct dish *temp_dish;
+	struct cmd_struct* command;
+	struct comanda *in_preparation, *curr_order, *temp_order;
 
 	input = (char*)malloc(sizeof(char) * INPUT_SIZE);
 	buffer = NULL;
-	command = NULL;
 	table_list = NULL;
 	temp_table = NULL;
-	dish_list = NULL;
 	temp_dish = NULL;
+	command = NULL;
 
 
 	/* Inizializzazione della lista di comande gestite dal Kitchen Device */
 	in_preparation = NULL;
-	in_service = NULL;
 	curr_order = NULL;
 
 	/* Check della porta */
@@ -202,105 +200,92 @@ int main(int argc, char* argv[]) {
 			/* Inserimento della comanda nella lista delle comande in preparazione */
 		
 			add_to_orders_list(&in_preparation, curr_order);
+			
+			print_taken_order(curr_order);
 
 			free_mem((void*)&buffer);
 			
-			print_taken_order(curr_order);
+		} else if(strcmp(input, "show\n") == 0) { // Comando 'show'
+
+			if(in_preparation == NULL) {
+				printf("Nessuna comanda in preparazione salvata su questo Kitchen Device\n");
+				fflush(stdout);
+				continue;
+			}
+
+			curr_order = in_preparation;	
+
+			while(curr_order != NULL) {
+				print_taken_order(curr_order);
+				curr_order = curr_order->next;
+			}
+
+		} else if(strncmp(input, "ready", 5) == 0) {
 			
-		} else if(strncmp(input, "comanda", 7) == 0) { // Controlla che la stringa inizi per 'comanda'
-			
-			command = create_cmd_struct_comanda(input, NULL, -1);
-			
+			command = create_cmd_struct_ready(input);
+
 			if(command == NULL) {
-				printf("Sintassi del comando 'comanda' è errata.\n");
-				printf("Sintassi: comanda {<piatto_1-quantità_1> <piatto_2-quantità_2> ... <piatto_n-quantità_n>}\n");
+				printf("La sintassi del comando 'ready' è errata.\n");
+				printf("Sintassi: ready <comanda>-<tavolo>:\n\t");
 				continue; // Skip dell'invio, sintassi del comando errata	
 			}
 
-			/* Invio della comanda */
+			/* Verifico che esista la comanda nella lista locale delle comande in preparazione */
+			
+			temp_order = find_order_in_orders_list(in_preparation, 
+					(char*)command->args[0],  // Comanda (com_count)
+				       	(char*)command->args[1]); // Tavolo (table)
+			
+
+			if(temp_order == NULL) {
+				printf("Comanda non trovata!\n");
+				fflush(stdout);
+				continue;
+			}
+			
+			/* Invio richiesta cambio stato comanda al server */
+			
 			write_text_to_buffer((void*)&buffer, input);
 			ret = send_data(sd, buffer);
-
+				
 			if(ret < 0) {
-				perror("Errore in fase di invio comando: ");
-				exit(1);
+				perror("Errore in fase di invio");
+				continue;
 			}
 
-			/* Attesa response avvenuta ricezione comanda */
-			
+			/* Attesa risposta server per avvenuto cambio stato della comanda */
+				
 			ret = receive_data(sd, (void*)&buffer);
 
 			if(ret < 0) {
-				perror("Errore durante l'attesa di ricezione\n");
-				exit(1);
+				perror("Errore in fase di ricezione");
+				continue;
 			}
 
-			if(strcmp("ORDER_RECEIVED", buffer) == 0)
-				printf("COMANDA RICEVUTA\n");
-			else if(strcmp("DISH_NOT_PRESENT", buffer) == 0)
-				printf("Nella comanda sono presenti piatti che non fanno parte del menu\n");
-			else
-				printf("Errore in fase di ricezione response per avvenuta ricezione comanda\n");
 
-		} else if(strcmp(input, "conto\n") == 0) {
-			/* Invio richiesta di conto */
-			write_text_to_buffer((void*)&buffer, input);
-			ret = send_data(sd, buffer);
+			if(strcmp(buffer, "OK_CHG_STATE\0") != 0) {
+				printf("Errore sul server durante il cambio stato della comanda\n");
+				fflush(stdout);
+				continue;
+			} 
 
-			if(ret < 0) {
-				perror("Errore in fase di invio comando: ");
-				exit(1); // CAPIRE COME AGIRE IN QUESTI CASI, EVITANDO DI FARE LA EXIT
-			}
-
-			for(;;) {
-				
-				/* Ricezione del conto */
-				ret = receive_data(sd, (void*)&buffer);
-
-				if(ret < 0) {
-					perror("Errore in fase di invio comando: ");
-					exit(1); // CAPIRE COME AGIRE IN QUESTI CASI, EVITANDO DI FARE LA EXIT
-				}
-
-				if(strcmp(buffer, "NO_ORDERS\0") == 0) {
-					printf("Impossibile calcolare il conto: non è presente nessuna comanda associata\n");
-					break;
-				}
-
-				if(strcmp("LAST_DISH\0", buffer) == 0) {
-					ret = receive_data(sd, (void*)&buffer);
-
-					if(ret < 0) {
-						perror("Errore in fase di ricezione comando");
-						exit(1); // CAPIRE COME AGIRE IN QUESTI CASI, EVITANDO DI FARE LA EXIT
-					}
-
-					printf("%s\n", buffer);
-					break;
-				}
-				
-				printf("%s\n", buffer);	
-			}
-
-			fflush(stdout);
-
-			/* Pulizia memoria e disconnessione dopo aver chiesto il conto */
-			free_mem((void*)&buffer);
-			free_mem((void*)&input);
-
-			temp_table = table_list;
+			/* Rimozione della comanda dalla lista delle comande in preparazione */
 			
-			while(table_list != NULL) {
-				temp_table = temp_table->next;
-				free_mem((void*)&table_list);
-				table_list = temp_table;
+			ret = delete_from_orders_list(&in_preparation, 
+					(char*)command->args[0],  // Comanda (com_count)
+				       	(char*)command->args[1]); // Tavolo (table)
+			
+			if(ret == 0) {
+				printf("La comanda da eliminare dalla lista locale delle comande in preparazione non è stata trovata!\n");
+			} else if(ret < 0) {
+				printf("La lista locale delle comande in preparazione è vuota!");
 			}
 
-			temp_table = NULL;
+			free_mem((void*)&curr_order);
 
-			printf("Grazie e arrivederci!\n");
-			exit(0);
-
+			printf("COMANDA IN SERVIZIO\n");
+			fflush(stdout);
+		
 		} else {	
 			printf("Comando errato. Utilizzare solo i comandi consentiti\n");
 		}
