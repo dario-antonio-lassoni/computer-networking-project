@@ -56,7 +56,7 @@ void print_menu_dishes(struct dish* list) {
 	struct dish* curr = list;
 	
 	while(curr != NULL) {	
-		printf("%s - %s \t%d\n", curr->identifier, curr->description, curr->price);	
+		printf("%s - %s\t%d\n", curr->identifier, curr->description, curr->price);	
 		fflush(stdout);
 		curr = curr->next;
 	}
@@ -145,6 +145,13 @@ void print_orders_by_table(struct comanda* list, char* table) {
 
 		curr = curr->next;
 	}
+
+}
+
+void print_taken_order(struct comanda* order) {
+
+	printf("%s %s\n", order->com_count, order->table);
+	print_dish_list(order->dish_list);
 
 }
 
@@ -526,13 +533,12 @@ int check_dishes(struct dish* list) {
 	not_found = 0; // Se uguale a 1 indica che non è stato trovato un piatto nel menu
 
 	if(menu_dishes == NULL) {
-		//free_mem
 		LOG_ERROR("Errore: il menu' è vuoto");
 		return -1;
 	}
 
 	if(curr_input == NULL) {
-		//free_mem
+		free_mem((void*)&menu_dishes);
 		LOG_ERROR("Errore: la comanda non contiene piatti");
 		return -1;
 	}
@@ -559,15 +565,13 @@ int check_dishes(struct dish* list) {
 		curr = menu_dishes;
 	}
 
+	free_mem((void*)&menu_dishes);
 
-	//free_mem
 	if(not_found == 1) {
 		return -1;
 	}
 
 	return 0;
-
-
 }
 
 void add_to_dish_list(struct dish** list, struct dish* dish) {
@@ -582,7 +586,7 @@ void add_to_dish_list(struct dish** list, struct dish* dish) {
 	
 	/* Avanzo fino alla coda della lista */
 	curr = *list;
-	while(curr->next != NULL) {
+	while(curr->next != NULL) { //Si blocca qui all'infinito, curr->next valgrind dice che non è inizializzato
 		curr = curr->next;
 	}
 
@@ -615,6 +619,26 @@ void add_to_table_list(struct table** list, struct table* table) {
 void add_to_orders_list(struct comanda** list, struct comanda* comanda) {
 	
 	struct comanda* curr;
+
+	/* Inserisco la comanda in testa se è la prima in lista */
+	if(*list == NULL) {
+		*list = comanda;
+		return;
+	} 
+	
+	/* Avanzo fino alla coda della lista */
+	curr = *list;
+	
+	while(curr->next != NULL)
+		curr = curr->next;
+	
+	/* Inserisco in coda */
+	curr->next = comanda;
+}
+
+void add_to_orders_list_with_increment(struct comanda** list, struct comanda* comanda) {
+	
+	struct comanda* curr;
 	int i;
 	
  	/* Init del contatore delle comande */	
@@ -644,6 +668,145 @@ void add_to_orders_list(struct comanda** list, struct comanda* comanda) {
 
 	/* Inserisco in coda */
 	curr->next = comanda;
+}
+
+/* Restituisce la comanda meno recente ancora in attesa */
+struct comanda* get_oldest_order_in_pending(struct client_device* list) {
+
+	struct client_device* curr_dev;
+	struct comanda *curr_order, *oldest_order;
+
+	curr_dev = list;
+	curr_order = NULL;
+	oldest_order = NULL;
+
+	/* Avanzo al primo client TD */
+	while(curr_dev != NULL && curr_dev->type != TD) {
+		
+		curr_dev = curr_dev->next;
+		
+		if(curr_dev == NULL) { // Se non è stato trovato un client TD
+			LOG_WARN("Nessuna Table Device trovato");
+			return NULL;
+		}
+
+	}
+
+	/* Cerco la comanda meno recente ancora in attesa */
+	while(curr_dev != NULL) {
+		
+		curr_order = curr_dev->comande;
+
+		while(curr_order != NULL) { // Le comande le troviamo soltanto nei Table Device, dunque se è NULL salta il ciclo
+
+			/* Se la comanda appena trovata è meno recente, salvo la comanda */
+			if(curr_dev->type == TD && curr_order->state == 'a') {
+				
+				if(oldest_order == NULL || curr_order->timestamp < oldest_order->timestamp)
+					oldest_order = curr_order;
+
+			}
+
+			curr_order = curr_order->next;
+		}
+
+		curr_dev = curr_dev->next;
+	}
+
+	return oldest_order;
+}
+
+void free_dish_list(struct dish** list) {
+	
+	struct dish *prec, *curr;
+
+	if(*list == NULL)
+		return;
+
+	prec = NULL;
+	curr = *list;	
+	
+	while(curr != NULL) {
+		prec = curr;
+		curr = curr->next;
+		free_mem((void*)&prec);
+	}
+
+}
+
+int get_dish_price(char* identifier) {
+	
+	struct dish* menu_dishes, *curr;
+	int price;
+
+	menu_dishes = load_menu_dishes();
+	curr = menu_dishes;
+
+	while(curr != NULL) {
+		if(strcmp(curr->identifier, identifier) == 0) {
+			price = curr->price;
+			break;
+		}
+		curr = curr->next;
+	}
+	
+	free_dish_list(&menu_dishes);
+
+	return price;
+
+}
+
+/* Recupera tutti i piatti dalla lista delle comande creando una lista unica di piatti */
+struct dish* get_all_dishes_by_order(struct comanda* comanda) {
+	
+	struct dish *dish_list, *curr_dish;
+	struct comanda* curr_com;
+	int price;
+	
+	dish_list = NULL;
+	curr_com = comanda;
+
+	while(curr_com != NULL) {
+		
+		curr_dish = curr_com->dish_list;
+		add_to_dish_list(&dish_list, curr_dish);
+		curr_com = curr_com->next;
+	
+	}
+
+	curr_dish = dish_list;
+
+	while(curr_dish != NULL) {
+	
+		/* Recupero prezzo del piatto dal menu */
+		price = get_dish_price(curr_dish->identifier);
+
+		/* Aggiorno il prezzo coerentemente con la quantità */
+		curr_dish->price = price * curr_dish->quantity;
+		
+		curr_dish = curr_dish->next;
+	}
+
+	return dish_list;
+}
+
+char* get_total_cost_by_dish_list(struct dish* list) {
+	
+	char* result = (char*)malloc(sizeof(char) * TOTAL_COST_LEN);
+	int total;
+	struct dish* curr;
+
+	curr = list;
+	total = 0;
+
+	while(curr != NULL) {
+		total += curr->price;
+		curr = curr->next;
+	}
+
+	sprintf(result, "Totale: %d", total);
+
+	return result;
 }
 
 void free_table_list(struct table** list) {
@@ -682,3 +845,4 @@ void free_booking_list(struct booking** list) {
 	}
 
 }
+

@@ -1,4 +1,4 @@
-all: server cli td
+all: server cli td kd
 
 # make rule per il server
 server: server.o libs/logger.o libs/device_utils.o libs/common_utils.o libs/database.o
@@ -11,6 +11,9 @@ cli: cli.o libs/logger.o libs/common_utils.o libs/database.o
 td: td.o libs/logger.o libs/common_utils.o libs/database.o
 	gcc -Wall -g td.o libs/logger.o libs/common_utils.o libs/database.o -o td
 
+kd: kd.o libs/logger.o libs/common_utils.o libs/database.o
+	gcc -Wall -g kd.o libs/logger.o libs/common_utils.o libs/database.o -o kd
+
 server.o: server.c
 	gcc -Wall -g -c server.c -o server.o  
 
@@ -19,6 +22,9 @@ cli.o: cli.c
 
 td.o: td.c
 	gcc -Wall -g -c td.c -o td.o
+
+kd.o: kd.c
+	gcc -Wall -g -c kd.c -o kd.o
 
 libs/logger.o: libs/logger.c
 	gcc -Wall -g -c libs/logger.c -o libs/logger.o
@@ -33,4 +39,4 @@ libs/database.o: libs/database.c
 	gcc -Wall -g -c libs/database.c -o libs/database.o
 
 clean:
-	rm *o server cli td libs/*.o
+	rm *o server cli td kd libs/*.o

@@ -29,6 +29,7 @@ int main(int argc, char* argv[]) {
 	char *buffer, *input;
 	struct table *table_list, *temp_table;
 	struct dish *dish_list, *temp_dish;
+	struct comanda* temp_order;
 
 	received_client = NULL;
 	client_list = NULL;
@@ -40,6 +41,7 @@ int main(int argc, char* argv[]) {
 	temp_table = NULL;
 	dish_list = NULL;
 	temp_dish = NULL;
+	temp_order = NULL;
 
 	if(!check_port(argc, argv)) {
 		printf("Argomenti errati. Specificare correttamente il comando come segue: ./server <porta>\n");
@@ -325,7 +327,7 @@ int main(int argc, char* argv[]) {
 									}
 								}
 								
-								LOG_INFO("Invio dei tavoli prenotabili completato. ");
+								LOG_INFO("Invio dei tavoli prenotabili completato.");
 
 								/* Salvataggio della lista dei tavoli prenotabili per questo client,
 								 * per poterla poi riutilizzare alla ricezione del comando 'book' */
@@ -395,9 +397,11 @@ int main(int argc, char* argv[]) {
 								
 								received_client->booking = get_booking_from_code((char*)command->args[0]); // args[0]: Contiene il booking code nella command 'login'
 								
-								set_LOG_INFO();
-								printf("Si è collegato il TD associato alla prenotazione %s, tavolo: %s\n", (char*)command->args[0], (received_client->booking)->table);
-								fflush(stdout);
+								if(strcmp(buffer, "BOOKING_CODE_IS_VALID") == 0) {	
+									set_LOG_INFO();
+									printf("Si è collegato il TD associato alla prenotazione %s, tavolo: %s\n", (char*)command->args[0], (received_client->booking)->table);
+									fflush(stdout);
+								}
 
 								free_mem((void*)&command);
 								
@@ -484,7 +488,7 @@ int main(int argc, char* argv[]) {
 								}
 
 								/* Aggiunta delle comanda nella lista delle comande */
-								add_to_orders_list( // Si occupa anche di incremenare il contatore delle comande!!!
+								add_to_orders_list_with_increment( // Si occupa anche di incremenare il contatore delle comande!!!
 										&received_client->comande, // Lista delle comande relative al Table Device che ha inviato la comanda
 										(struct comanda*)command->args[0] // Nuova comanda da aggiungere
 										);
@@ -508,10 +512,136 @@ int main(int argc, char* argv[]) {
 								// Da ccancellare!
 
 
+							} else if(strncmp(buffer, "conto", 5) == 0) { // Comando 'conto'
+								
+								dish_list = get_all_dishes_by_order(received_client->comande);
+								temp_dish = dish_list;
+
+								if(dish_list == NULL) { // Se non esistono comande 
+									write_text_to_buffer((void*)&buffer, "NO_ORDERS\0");
+									ret = send_data(i, (void*)buffer);
+
+									if(ret < 0) {
+										set_LOG_ERROR();
+										perror("Errore durante l'invio dei tavoli prenotabili");
+									}
+
+									continue; // Sia che la send vada in errore, sia che vada a buon fine
+								}
+								
+								while(temp_dish != NULL) {
+									// DA VERIFICARE SE C'E' DA FARE UNA MALLOC DEL BUFFER QUI!
+									buffer = (char*)malloc(sizeof(char) * 1024);
+									sprintf(buffer, "%s %d %d", &temp_dish->identifier[0], temp_dish->quantity, temp_dish->price);
+									ret = send_data(i, (void*)buffer); 
+								
+									if(ret < 0) {
+										LOG_ERROR("Errore durante l'invio del conto");
+										break;
+									}
+								
+									temp_dish = temp_dish->next;
+								}
+
+								write_text_to_buffer((void*)&buffer, "LAST_DISH\0");	
+								ret = send_data(i, (void*)buffer);
+
+								if(ret < 0) {
+									set_LOG_ERROR();
+									perror("Errore durante l'invio del conto");
+									continue;
+								}
+
+								buffer = get_total_cost_by_dish_list(dish_list);
+								ret = send_data(i, (void*)buffer);
+										
+								if(ret < 0) {
+									set_LOG_ERROR();
+									perror("Errore durante l'invio del conto");
+									continue;
+								}
+								
+								LOG_INFO("Invio del conto completato.");
+
 							}
 
 						} else if(received_client->type == KD) {	
-							LOG_INFO("Il comando è stato ricevuto da un Kitchen Device");	
+
+							LOG_INFO("Il comando è stato ricevuto da un Kitchen Device");
+
+							/* Riconoscimento del comando */
+							if(strncmp(buffer, "take", 4) == 0) { // Comando 'take'
+						
+								/* Recupero della comanda meno recente ancora in stato 'in attesa' */
+								
+								temp_order = get_oldest_order_in_pending(client_list);
+
+								if(temp_order == NULL) {
+									LOG_WARN("NO ORDER!");
+									write_text_to_buffer((void*)&buffer, "NO_ORDERS");
+									ret = send_data(i, (void*)buffer);
+									
+									if(ret < 0) {
+										LOG_ERROR("Errore durante l'invio delle comande");
+									}
+
+									continue;	
+								}
+
+								/* Invio della comanda (senza la lista piatti) */
+								sprintf(buffer, "order %s-%s", &temp_order->table[0], &temp_order->com_count[0]);
+								ret = send_data(i, (void*)buffer); 
+								
+								if(ret < 0) {
+									LOG_ERROR("Errore durante l'invio dei tavoli prenotabili. Chiudo la comunicazione");
+									delete_client_device(&client_list, i);
+									close(i);
+									FD_CLR(i, &master);
+									break;
+								}
+
+								/* Invio dei piatti della comanda */
+								
+								temp_dish = temp_order->dish_list;
+
+								while(temp_dish != NULL) {
+									free_mem((void*)&buffer);
+									buffer = (char*)malloc(sizeof(char) * 2048);
+
+									sprintf(buffer, "dish %s-%d-%s", &temp_dish->identifier[0], temp_dish->quantity, &temp_dish->description[0]);
+									ret = send_data(i, (void*)buffer); 
+									
+									if(ret < 0) {
+										LOG_ERROR("Errore durante l'invio dei piatti della comanda. Chiudo la comunicazione");
+										delete_client_device(&client_list, i);
+										close(i);
+										FD_CLR(i, &master);
+										break;
+									}
+								
+									temp_dish = temp_dish->next;
+
+									if(temp_dish == NULL) {
+										write_text_to_buffer((void*)&buffer, "END_MSG");
+										ret = send_data(i, (void*)buffer);
+										
+										if(ret < 0) {
+											set_LOG_ERROR();
+											perror("Errore durante l'invio dei piatti della comanda. Chiudo la comunicazione");
+											delete_client_device(&client_list, i);
+											close(i);
+											FD_CLR(i, &master);
+											break;
+										}
+									}
+								}
+
+								/* Cambio stato della comanda da 'in attesa' a 'in preparazione' */	
+								temp_order->state = 'p';
+								
+								LOG_INFO("Invio della comanda meno recente in stato di attesa completato.");
+
+							}
 						}
 					}	
 				

@@ -68,15 +68,21 @@ void free_table_list(struct table** list);
 
 /* MENU_DISHES */
 struct dish* load_menu_dishes();
-void add_to_dish_list(struct dish** list, struct dish* dish); // ORMAI DA ELIMINARE?
+void add_to_dish_list(struct dish** list, struct dish* dish);
 void print_menu_dishes(struct dish* list);
 /* Controlla che la comanda contenga solo piatti presenti nel menu del giorno */
 int check_dishes(struct dish* list);
+struct dish* get_all_dishes_by_order(struct comanda* comanda);
+char* get_total_cost_by_dish_list(struct dish* list);
 
 /* COMANDA */
 void add_to_orders_list(struct comanda** list, struct comanda* comanda);
+/* Prima di aggiungere in lista si occupa di incrementare il contatore della comanda */
+void add_to_orders_list_with_increment(struct comanda** list, struct comanda* comanda);
 void print_all_orders(struct comanda* list);
 void print_orders_by_state(struct comanda* list, char state);
 void print_orders_by_table(struct comanda* list, char* table);
+void print_taken_order(struct comanda* list); // Print specifica per Kitchen Device
+struct comanda* get_oldest_order_in_pending(struct client_device* list);
 
 #endif

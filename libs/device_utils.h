@@ -8,22 +8,8 @@
 #ifndef DEVICE_UTILS_H 
 #define DEVICE_UTILS_H
 
-#include "common_header.h"
+//#include "common_header.h"
 #include "common_utils.h"
-
-enum client_type { CL, TD, KD };
-
-struct client_device {
-	int fd;
-	int port; 
-	enum client_type type; // Tipologia di client collegato
-	struct table* bookable_table; // Copia dei tavoli prenotabili per facilitarne il recupero durante l'utilizzo del comando book.
-	struct booking* booking; // Contiene informazioni utili al Table Device (se type == TD)
-	struct cmd_struct* find_cmd; // Copia dei parametri della find per facilitare il recupero delle informazioni relative al timeslot (book)
-	struct comanda* comande; // Lista delle comande relative al Table Device identificato dal client_device
-	struct dish* dishes_ordered; // Comande relative al Table Device identificato dal client_device
-	struct client_device* next; // Puntatore al prossimo client collegato della lista
-};
 
 struct client_device* find_client_device_by_fd(struct client_device** head, int i);
 struct client_device* find_client_device_by_port(struct client_device** head, int i);

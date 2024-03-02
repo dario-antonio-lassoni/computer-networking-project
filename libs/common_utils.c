@@ -229,8 +229,8 @@ struct cmd_struct* create_cmd_struct_comanda(char* input, char* table, int sd_td
 	comanda->timestamp = now; // Set dell'istante in cui è arrivata la comanda al server
 	comanda->sd = sd_td; // Socket Descriptor del Table Device (lato server) 
 		
-	//((struct comanda*)command->args[0])->next = NULL;	
-	comanda->next = NULL;
+	((struct comanda*)command->args[0])->next = NULL;	
+	//comanda->next = NULL;
 
 	token = strtok(buffer, " ");
 	token = strtok(NULL, " "); // Indico alla funzione strtok di saltare direttamente al primo token (" ") 

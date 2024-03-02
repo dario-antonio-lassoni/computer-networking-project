@@ -22,9 +22,9 @@
 #define INPUT_SIZE 512
 
 void print_help() {
-	printf(" menu\n\tmostra il menu dei piatti\n");
-	printf(" comanda {<piatto_1-quantità_1>...<piatto_n-quantità_n>}\n\tinvia una comanda con i piatti e la quantità indicata\n");
-	printf(" conto\n\tchiede il conto\n");
+	printf(" menu\n\tmostra il menu dei piatti contenente:\n\t1. il codice identificativo del piatto\n\t2. la descrizione del piatto\n\t3. il prezzo\n");
+	printf(" comanda {<piatto_1-quantità_1>...<piatto_n-quantità_n>}\n\tinvia una comanda con i piatti e la quantità indicati\n");
+	printf(" conto\n\tchiede il conto e mostra il prezzo di ogni singolo piatto.\n\tUna volta chiesto il conto non è più possibile eseguire altri comandi.\n");
 }
 
 void print_start_menu() {	
@@ -124,19 +124,23 @@ int main(int argc, char* argv[]) {
 		perror("Errore in fase di ricezione dell'ACK per avvenuto riconoscimento: \n");
 		exit(1);
 	}
-
-	free_mem((void*)&buffer);
-
 	
 	for(;;) {
 		printf("Inserire il codice di prenotazione: ");
 		fflush(stdout);
 		
+		free_mem((void*)&buffer);
+		
 		buffer = (char*)malloc(sizeof(char) * CMD_LOGIN_LEN); // login + BOOKING_CODE_LEN
 		strcpy(buffer, "login ");
 
 		/* Prelevo in input il codice di prenotazione */
-		fgets(input, INPUT_SIZE, stdin);
+		fgets(input, BOOKING_CODE_LEN, stdin);
+
+		if(strcmp(input, "\n") == 0) {
+			free_mem((void*)&buffer);
+			continue;
+		}
 		
 		/* Concatenzione del comando login con il codice di prenotazione da inviare al server */
 		strcat(buffer, input);
@@ -159,6 +163,8 @@ int main(int argc, char* argv[]) {
 
 		if(strcmp(buffer, "BOOKING_CODE_IS_VALID\0") == 0) {
 			printf("Codice prenotazione corretto\n");
+			free_mem((void*)&buffer);
+			memset(input, 0, INPUT_SIZE);
 			break;
 		} else if(strcmp(buffer, "BOOKING_CODE_IS_NOT_VALID\0") == 0) {
 			printf("Codice di prenotazione non valido.\n");
@@ -170,9 +176,11 @@ int main(int argc, char* argv[]) {
 	print_start_menu();
 
 	for(;;) {
-				
-		fgets(input, INPUT_SIZE, stdin);
 		
+		do {
+			fgets(input, INPUT_SIZE, stdin);
+		} while(strcmp(input, "\n") == 0); // Non sono ammessi input vuoti
+
 		if(strcmp(input, "esc\n") == 0) {
 			
 			free_mem((void*)&buffer);
@@ -232,8 +240,6 @@ int main(int argc, char* argv[]) {
 			
 		} else if(strncmp(input, "comanda", 7) == 0) { // Controlla che la stringa inizi per 'comanda'
 			
-			/* Comando 'comanda' con i piatti in una lista puntata di dish su arg0 di command */	
-			
 			command = create_cmd_struct_comanda(input, NULL, -1);
 			
 			if(command == NULL) {
@@ -260,13 +266,72 @@ int main(int argc, char* argv[]) {
 				exit(1);
 			}
 	
-			if(strcmp("ORDER_RECEIVED", buffer) == 0) {
-				printf("COMANDA RICEVUTA\n");
-			} else if(strcmp("DISH_NOT_PRESENT", buffer) == 0) {
+			if(strcmp("ORDER_RECEIVED", buffer) == 0)
+				printf("COMANDA RICEVUTA\n");	
+			else if(strcmp("DISH_NOT_PRESENT", buffer) == 0)
 				printf("Nella comanda sono presenti piatti che non fanno parte del menu\n");
-			} else {
+			else 
 				printf("Errore in fase di ricezione response per avvenuta ricezione comanda\n");
+			
+
+		} else if(strcmp(input, "conto\n") == 0) {
+			/* Invio richiesta di conto */
+			write_text_to_buffer((void*)&buffer, input);
+			ret = send_data(sd, buffer);
+
+			if(ret < 0) {
+				perror("Errore in fase di invio comando: ");
+				exit(1); // CAPIRE COME AGIRE IN QUESTI CASI, EVITANDO DI FARE LA EXIT
 			}
+
+			for(;;) {
+				
+				/* Ricezione del conto */
+				ret = receive_data(sd, (void*)&buffer);
+
+				if(ret < 0) {
+					perror("Errore in fase di invio comando: ");
+					exit(1); // CAPIRE COME AGIRE IN QUESTI CASI, EVITANDO DI FARE LA EXIT
+				}
+
+				if(strcmp(buffer, "NO_ORDERS\0") == 0) {
+					printf("Impossibile calcolare il conto: non è presente nessuna comanda associata\n");
+					break;
+				}
+
+				if(strcmp("LAST_DISH\0", buffer) == 0) {
+					ret = receive_data(sd, (void*)&buffer);
+
+					if(ret < 0) {
+						perror("Errore in fase di ricezione comando");
+						exit(1); // CAPIRE COME AGIRE IN QUESTI CASI, EVITANDO DI FARE LA EXIT
+					}
+
+					printf("%s\n", buffer);
+					break;
+				}
+				
+				printf("%s\n", buffer);	
+			}
+
+			fflush(stdout);
+
+			/* Pulizia memoria e disconnessione dopo aver chiesto il conto */
+			free_mem((void*)&buffer);
+			free_mem((void*)&input);
+
+			temp_table = table_list;
+			
+			while(table_list != NULL) {
+				temp_table = temp_table->next;
+				free_mem((void*)&table_list);
+				table_list = temp_table;
+			}
+
+			temp_table = NULL;
+
+			printf("Grazie e arrivederci!\n");
+			exit(0);
 
 		} else {	
 			printf("Comando errato. Utilizzare solo i comandi consentiti\n");

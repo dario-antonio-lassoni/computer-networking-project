@@ -119,9 +119,11 @@ int main(int argc, char* argv[]) {
 	print_command_list();
 
 	for(;;) {
-
-		fgets(input, INPUT_SIZE, stdin);
 		
+		do {
+			fgets(input, INPUT_SIZE, stdin);
+		} while(strcmp(input, "\n") == 0);
+
 		if(strcmp(input, "esc\n") == 0) {
 			
 			free_mem((void*)&buffer);
