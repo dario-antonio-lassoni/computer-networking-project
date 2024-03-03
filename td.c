@@ -28,7 +28,6 @@ void print_help() {
 }
 
 void print_start_menu() {	
-	//printf("\e[1;1H\e[2J");
 	printf("***************************** BENVENUTO *****************************\n");
 	printf("Digita un comando:\n\n");
 	printf("1) help\t\t--> mostra i dettagli dei comandi\n");

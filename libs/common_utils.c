@@ -352,6 +352,30 @@ int receive_data(int sd, void** buf) {
 
 }
 
+
+void send_notify_to_all_kd(struct client_device* list) {
+	
+	struct client_device* dev;
+	char* buffer;
+
+	if(list == NULL)
+		return;
+
+	dev = list;
+	write_text_to_buffer((void*)&buffer, "NEW_ORDER");
+
+	while(dev != NULL) {
+		
+		if(dev->type == KD) {
+			send_data(dev->fd, buffer);
+			LOG_INFO("Notifica inviata al Kitchen Device!");
+		}
+
+		dev = dev->next;
+	}
+
+}	
+
 /* Wrapper della free, si limita a fare dei controlli in più */
 void free_mem(void** ptr) {
 

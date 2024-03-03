@@ -25,6 +25,8 @@ void write_text_to_buffer(void** buf, char* text);
 int send_data(int sd, void* buf);
 /* Receive indipendente dalla dimensione del messaggio e che utilizza il Text Protocol */
 int receive_data(int sd, void** buf);
+/* Invia notifica a tutti i Kitchen Device all'arrivo di una comanda */
+void send_notify_to_all_kd(struct client_device* list); 
 /* Wrapper della free, si limita a fare dei controlli in più */
 void free_mem(void** ptr);
 

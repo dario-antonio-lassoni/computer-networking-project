@@ -19,9 +19,9 @@ struct cmd_struct {
 	void* args[6];
 };
 
-enum client_type { CL, TD, KD };
+enum client_type { CL, TD, KD }; // CAMBIARE IN device_type
 
-struct client_device {
+struct client_device { //CAMBIARE IN device
 	int fd;
 	int port; 
 	enum client_type type; // Tipologia di client collegato

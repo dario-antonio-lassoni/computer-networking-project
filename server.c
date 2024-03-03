@@ -491,11 +491,16 @@ int main(int argc, char* argv[]) {
 									continue;
 								}
 
-								/* Aggiunta delle comanda nella lista delle comande */
+								/* Aggiunta della comanda nella lista delle comande */
 								add_to_orders_list_with_increment( // Si occupa anche di incremenare il contatore delle comande!!!
 										&received_client->comande, // Lista delle comande relative al Table Device che ha inviato la comanda
 										(struct comanda*)command->args[0] // Nuova comanda da aggiungere
 										);
+
+
+								/* Invio notifica ai Kitchen Device per segnalare l'arrivo della comanda */
+								
+								send_notify_to_all_kd(client_list);
 
 								/* Invio segnalazione al TD per comanda ricevuta */
 								
@@ -510,11 +515,6 @@ int main(int argc, char* argv[]) {
 									FD_CLR(i, &master);
 									continue;
 								}
-								
-								/* Inserimento della comanda nella lista dei piatti ordinati dal client_device TD */
-								//add_to_dish_list(&received_client->dishes_ordered, ((struct comanda*)(command->args[0]))->dish_list);
-								// Da ccancellare!
-
 
 							} else if(strncmp(buffer, "conto", 5) == 0) { // Comando 'conto'
 								
@@ -651,6 +651,7 @@ int main(int argc, char* argv[]) {
 								
 								if(command == NULL) {
 									LOG_ERROR("Struttura della ready errata!");
+									continue;
 								}
 
 								/* Ricerca della comanda */
