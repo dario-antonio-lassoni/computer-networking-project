@@ -1,6 +1,9 @@
 CMD VALGRIND:
 valgrind -s --leak-check=full --show-leak-kinds=all --track-origins=yes ./cli 123
 
+- ELIMINARE opzione -g da makefile!!!!!!!
+- Pulire codice dove possibile (commenti ecc)
+
 - check che un td con un codice prenotazione non sia già collegato (non possonoe sserci 2 td con la stessa prenotazione)
 
 - Incrementare su booking e table la lunghezza di table da 3 a 4 char (così da poter avere tavoli formati da 3 caratteri, T10, T11 ecc...)	
