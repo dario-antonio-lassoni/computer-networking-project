@@ -17,9 +17,6 @@
 #include "libs/common_utils.h"
 #include "libs/database.h"
 
-#define BACKLOG_SIZE 10 /* Default backlog size del listener */
-#define INPUT_SIZE 512
-
 int main(int argc, char* argv[]) {
 	int ret, newfd, listener, i, addrlen, server_port, fdmax;
 	fd_set master, read_fds;
@@ -110,38 +107,43 @@ int main(int argc, char* argv[]) {
 					
 					if(strcmp(input, "stop\n") == 0) {
 
-						LOG_INFO("Chiusura server in corso...");
-						//shutdown_server(client_list, fdmax);	i
+						if(check_shutdown(client_list)) {
+							LOG_INFO("Invio richiesta di disconnessione ai Table Device e Kitchen Device");
+							
+							temp_client = client_list;
 						
-						struct client_device* prec_cli;
-					
-						prec_cli = NULL;
-					
-						while(client_list != NULL) {
-							//delete all client device
-							set_LOG_INFO();
-							printf("elimino client %d", client_list->fd);
-							fflush(stdout);
-							prec_cli = client_list;
-							client_list = client_list->next;
-							free_mem((void*)&prec_cli);
-						}
+							while(temp_client != NULL) {
+									
+								write_text_to_buffer((void*)&buffer, "SHUTDOWN");
+								ret = send_data(temp_client->fd, buffer);
+											      
+								if(ret < 0) {
+									LOG_ERROR("Errore di comunicazione con il device in fase di spegnimento! Chiudo la comunicazione.");	
+									close(i);
+									FD_CLR(i, &master);
+								}
 
-						free_table_list(&table_list);
-						free_mem((void*)&temp_table);
-						free_mem((void*)&command);
-						free_mem((void*)&buffer);
-						free_mem((void*)&input);
+								temp_client = temp_client->next;
+							}		
 
-						for(i = 0; i < fdmax; i++) {
-							close(i);	
+							LOG_INFO("Arresto del server in corso...");
+							sleep(2);
+							LOG_INFO("Arresto completato");	
+
+							free_table_list(&table_list);
+							free_mem((void*)&temp_table);
+							free_mem((void*)&command);
+							free_mem((void*)&buffer);
+							free_mem((void*)&input);
+
+							exit(0);
+
+						} else {
+							LOG_WARN("Impossibile arrestare il server. Ci sono ancora comande nello stato 'in preparazione' o 'in attesa'.");
 						}
-					
-						exit(0);
 	
 					} else if(strncmp(input, "stat", 4) == 0) {
 						
-						// Valutare se spostare tutte queste in funzioni apposite in libreria esterna
 						temp_client = client_list;
 
 						buffer = (char*)malloc(sizeof(char) * TABLE_LEN);
@@ -302,7 +304,9 @@ int main(int argc, char* argv[]) {
 								}
 								
 								while(temp_table != NULL) {
-									// DA VERIFICARE SE C'E' DA FARE UNA MALLOC DEL BUFFER QUI!
+									free_mem((void*)&buffer);
+									buffer = (char*)malloc(sizeof(char) * GENERIC_DATA_LEN);
+									
 									sprintf(buffer, "%s %s %s", &temp_table->table[0], &temp_table->room[0], &temp_table->position[0]);
 									ret = send_data(i, (void*)buffer); 
 								
@@ -429,7 +433,7 @@ int main(int argc, char* argv[]) {
 							
 								while(temp_dish != NULL) {
 									free_mem((void*)&buffer);
-									buffer = (char*)malloc(sizeof(char) * 2048);
+									buffer = (char*)malloc(sizeof(char) * GENERIC_DATA_LEN);
 
 									sprintf(buffer, "%d %s - %s", temp_dish->price, &temp_dish->identifier[0], &temp_dish->description[0]);
 									ret = send_data(i, (void*)buffer); 
@@ -503,8 +507,10 @@ int main(int argc, char* argv[]) {
 								send_notify_to_all_kd(client_list);
 
 								/* Invio segnalazione al TD per comanda ricevuta */
+								free_mem((void*)&buffer);
+								buffer = (char*)malloc(sizeof(char) * GENERIC_DATA_LEN);	
 								
-								write_text_to_buffer((void*)&buffer, "ORDER_RECEIVED");
+								sprintf(buffer, "COMANDA RICEVUTA (%s)", (char*)((struct comanda*)command->args[0])->com_count);
 								ret = send_data(i, (void*)buffer);
 								
 								if(ret < 0) {
@@ -534,8 +540,9 @@ int main(int argc, char* argv[]) {
 								}
 								
 								while(temp_dish != NULL) {
-									// DA VERIFICARE SE C'E' DA FARE UNA MALLOC DEL BUFFER QUI!
-									buffer = (char*)malloc(sizeof(char) * 1024);
+									free_mem((void*)&buffer);
+									buffer = (char*)malloc(sizeof(char) * GENERIC_DATA_LEN);
+									
 									sprintf(buffer, "%s %d %d", &temp_dish->identifier[0], temp_dish->quantity, temp_dish->price);
 									ret = send_data(i, (void*)buffer); 
 								
@@ -593,6 +600,9 @@ int main(int argc, char* argv[]) {
 								}
 
 								/* Invio della comanda (senza la lista piatti) */
+								free_mem((void*)&buffer);
+								buffer = (char*)malloc(sizeof(char) * GENERIC_DATA_LEN);	
+								
 								sprintf(buffer, "order %s-%s", &temp_order->table[0], &temp_order->com_count[0]);
 								ret = send_data(i, (void*)buffer); 
 								
@@ -609,10 +619,11 @@ int main(int argc, char* argv[]) {
 								temp_dish = temp_order->dish_list;
 
 								while(temp_dish != NULL) {
+									
 									free_mem((void*)&buffer);
-									buffer = (char*)malloc(sizeof(char) * 2048);
+									buffer = (char*)malloc(sizeof(char) * GENERIC_DATA_LEN);
 
-									sprintf(buffer, "dish %s-%d-%s", &temp_dish->identifier[0], temp_dish->quantity, &temp_dish->description[0]);
+									sprintf(buffer, "dish %s-%d", &temp_dish->identifier[0], temp_dish->quantity);
 									ret = send_data(i, (void*)buffer); 
 									
 									if(ret < 0) {
@@ -640,10 +651,30 @@ int main(int argc, char* argv[]) {
 									}
 								}
 
-								/* Cambio stato della comanda da 'in attesa' a 'in preparazione' */	
-								temp_order->state = 'p';
-								
 								LOG_INFO("Invio della comanda meno recente in stato di attesa completato.");
+
+								/* Cambio stato della comanda da 'in attesa' a 'in preparazione' */	
+							
+								temp_order->state = 'p';
+
+								/* Invio notifica al Table Device per segnalare il cambio di stato della comanda */
+								free_mem((void*)&buffer);
+								buffer = (char*)malloc(sizeof(char) * GENERIC_DATA_LEN);
+								
+								sprintf(buffer, "COMANDA IN PREPARAIZONE (%s)",
+										temp_order->com_count); // com_count
+							
+								ret = send_data(temp_order->sd, (void*)buffer); 
+								
+								if(ret < 0) {
+									LOG_ERROR("Errore durante l'invio dei piatti della comanda. Chiudo la comunicazione");
+									delete_client_device(&client_list, i);
+									close(i);
+									FD_CLR(i, &master);
+									break;
+								}
+								
+								LOG_INFO("Notifico il TD per il passaggio di stato della comanda.");
 
 							} if(strncmp(buffer, "ready", 4) == 0) { // Comando 'ready'
 								
@@ -708,6 +739,26 @@ int main(int argc, char* argv[]) {
 									(char*)command->args[0],  // com_count
 									(char*)command->args[1]); // table
 								fflush(stdout);
+	
+								/* Invio notifica al Table Device per segnalare il cambio di stato della comanda */
+							
+								free_mem((void*)&buffer);
+								buffer = (char*)malloc(sizeof(char) * GENERIC_DATA_LEN);
+								
+								sprintf(buffer, "COMANDA IN SERVIZIO (%s)",
+										(char*)command->args[0]); // com_count
+
+								ret = send_data(temp_order->sd, (void*)buffer); 
+								
+								if(ret < 0) {
+									LOG_ERROR("Errore durante l'invio dei piatti della comanda. Chiudo la comunicazione");
+									delete_client_device(&client_list, i);
+									close(i);
+									FD_CLR(i, &master);
+									break;
+								}
+								
+								LOG_INFO("Notifico il TD per il passaggio di stato della comanda.");
 							}
 						}
 					}	

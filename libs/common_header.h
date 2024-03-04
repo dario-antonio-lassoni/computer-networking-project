@@ -8,11 +8,30 @@
 #include <arpa/inet.h>
 #include "logger.h"
 
-#define BOOKING_CODE_LEN 10
+
+#define BACKLOG_SIZE 10 /* Default backlog size del listener */
+#define INPUT_SIZE 512
+
 #define CMD_LOGIN_LEN 16
+
+/* cmd_struct_find CONST */
+#define FIND_LEN 5
+#define SURNAME_LEN 100
+
+/* cmd_struct_book CONST */
+#define BOOK_LEN 5
+
+/* cmd_struct_login CONST */
+#define LOGIN_LEN 5
+#define BOOKING_CODE_LEN 10
+
+/* cmd_struct_ready CONST */
+#define READY_LEN 6
 #define COMANDA_COUNT_LEN 7 // Numero massimo possibile di comande: 999 <strlen('com' + '999')>
 #define TABLE_LEN 3
-#define TOTAL_COST_LEN 16 
+
+#define TOTAL_COST_LEN 16
+#define GENERIC_DATA_LEN 256
 
 struct cmd_struct {
 	char* cmd;

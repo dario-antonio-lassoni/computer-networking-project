@@ -19,9 +19,6 @@
 #include "libs/common_utils.h"
 #include "libs/database.h"
 
-#define BACKLOG_SIZE 10
-#define INPUT_SIZE 512
-
 void print_start_menu() {	
 	//printf("\e[1;1H\e[2J");
 	printf("Comandi disponibili:\n");
@@ -84,7 +81,7 @@ int main(int argc, char* argv[]) {
 	FD_ZERO(&master);
         FD_ZERO(&read_fds);
 
-        FD_SET(0, &master); // Descrittore STDIN del Kitchen Device
+        FD_SET(0, &master); // Descrittore STDIN del Table Device
         FD_SET(sd, &master);
         fdmax = sd;
 	
@@ -216,7 +213,7 @@ int main(int argc, char* argv[]) {
 							/* Aggiunta del piatto nella dish_list*/
 							temp_dish = (struct dish*)malloc(sizeof(struct dish));
 							temp_dish->next = NULL;
-							ret = sscanf(buffer, "dish %[^-]-%d-%[^\n]", &temp_dish->identifier[0], &temp_dish->quantity, &temp_dish->description[0]) ;
+							ret = sscanf(buffer, "dish %[^-]-%d", &temp_dish->identifier[0], &temp_dish->quantity) ;
 							add_to_dish_list(&curr_order->dish_list, temp_dish);
 						}
 						
@@ -227,7 +224,8 @@ int main(int argc, char* argv[]) {
 						print_taken_order(curr_order);
 
 						free_mem((void*)&buffer);
-						
+						curr_order = NULL;
+
 					} else if(strcmp(input, "show\n") == 0) { // Comando 'show'
 
 						if(in_preparation == NULL) {
@@ -309,10 +307,40 @@ int main(int argc, char* argv[]) {
 						printf("COMANDA IN SERVIZIO\n");
 						fflush(stdout);
 					
-					} else {	
-						printf("Comando errato. Utilizzare solo i comandi consentiti\n");
-					}
+					}	
 
+                                } else if(i == sd) { // Gestione notifiche o richiesta di disconnessione dal server
+                                        
+					ret = receive_data(sd, (void*)&buffer);
+
+                                        if(ret < 0) {
+                                                perror("Errore in fase di ricezione");
+                                                continue;
+                                        }
+
+					if(strcmp(buffer, "SHUTDOWN") == 0) { // Richiesta di disconnessione da parte del server
+					
+						free_mem((void*)&buffer);
+						free_mem((void*)&input);
+
+						temp_table = table_list;
+						
+						while(table_list != NULL) {
+							temp_table = temp_table->next;
+							free_mem((void*)&table_list);
+							table_list = temp_table;
+						}
+
+						temp_table = NULL;
+
+						printf("Chiusura client...\n");
+						exit(0);
+
+					} else if(strcmp(buffer, "NEW_ORDER\0") == 0) { // Stampa notifica nuovo ordine
+						printf("*\n");
+						fflush(stdout);
+					}
+                          
 				} else if(i == sd) { // Gestione notifiche dal server
 
 					ret = receive_data(sd, (void*)&buffer);
@@ -321,12 +349,6 @@ int main(int argc, char* argv[]) {
 						perror("Errore in fase di ricezione");
 						continue;
 					}
-
-					if(strcmp(buffer, "NEW_ORDER\0") == 0) {
-						printf("*\n");
-						fflush(stdout);
-					}
-
 				}
 			}
 		}

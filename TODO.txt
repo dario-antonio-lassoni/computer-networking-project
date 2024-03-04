@@ -1,7 +1,6 @@
 CMD VALGRIND:
 valgrind -s --leak-check=full --show-leak-kinds=all --track-origins=yes ./cli 123
 
-
 - check che un td con un codice prenotazione non sia già collegato (non possonoe sserci 2 td con la stessa prenotazione)
 
 - Incrementare su booking e table la lunghezza di table da 3 a 4 char (così da poter avere tavoli formati da 3 caratteri, T10, T11 ecc...)	
@@ -9,9 +8,3 @@ valgrind -s --leak-check=full --show-leak-kinds=all --track-origins=yes ./cli 12
 - Valutare se  inserire un check quando diversi client fanno richiesta della book sulla stessa data e restano contemporaneamente nello stato pending (fatta la find ma non ancora fatta la book)
 	ciò porterebbe alla possibilità di diversi client di prenotare per lo stesso timeslot lo stesso tavolo, perché non viene fatto un check
 
-- Le comande inviate restano visibili sul table device in stato "in attesa" finché un cuoco non se ne prende carico.
-- Sistema di notifiche ai kitchen device!
-- Dopo l'accettazione, il kitchen device mostra a video i piatti che compongono la comanda, e invia un messaggio al server, il quale invia un messaggio al relativo table device
-  che visualizza lo stato della comanda come "in preparazione".
-- Quando tutti i piatti della comanda sono pronti, il cuoco lo segnala tramite il kitchen device il quale invia un messaggio al server che lo inoltra al table device
-- stop del server!

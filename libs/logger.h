@@ -1,3 +1,10 @@
+/**
+ *
+ * Dario Antonio Lassoni
+ * Matricola: 565721
+ *
+ */
+
 #ifndef LOGGER_H
 #define LOGGER_H
 
@@ -11,10 +18,8 @@
 void LOG_INFO(char* msg);
 void LOG_WARN(char* msg);
 void LOG_ERROR(char* msg);
-void LOG_PERROR(char* msg);
 void set_LOG_INFO();
 void set_LOG_WARN();
 void set_LOG_ERROR();
-void reset_LOG();
 
 #endif

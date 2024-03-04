@@ -8,13 +8,13 @@
 #include "device_utils.h"
 #include "common_header.h"
 
-/* FUNZIONE DI DEBUG, DA ELIMINARE */
+/* FUNZIONE DI DEBUG */
 void print_list(struct client_device** head) {
 	struct client_device* current = *head;
 	int i = 0;
 	while(current != NULL) {
 		set_LOG_INFO();
-		printf("Elementi in lista: elem %d, fd:%d porta: %d, type: %d\n", i, current->fd, current->port, current->type);
+		printf("Device in lista: elem %d, fd:%d porta: %d, type: %d\n", i, current->fd, current->port, current->type);
 		current = current->next;
 		i++;
 	}
@@ -138,3 +138,26 @@ int add_client_device(struct client_device** head, struct client_device* client)
 	return 1; /* Ritorna 1 se l'aggiunta del device è andata a buon fine */
 }
 
+/* Verifica che non esistano comande in stato 'in preparazione' o 'in attesa' */
+int check_shutdown(struct client_device* list) {
+
+	struct client_device* dev;
+	struct comanda* order;
+
+	dev = list;
+
+	while(dev != NULL) {
+		order = dev->comande;
+
+		while(order != NULL) {
+			if(order->state == 'a' || order->state == 'p')
+				return 0; // E' stata trovata una comanda 'in preparazione' o 'in attesa'
+			order = order->next;
+		}
+
+		dev = dev->next;
+	}
+
+	return 1; // Nessuna delle comande è 'in preparazione' o 'in attesa'
+
+}

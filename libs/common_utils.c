@@ -87,8 +87,8 @@ struct cmd_struct* create_cmd_struct_find(char* input) {
 	/* Allocazione memoria per la cmd_struct */
 	
 	struct cmd_struct* command = (struct cmd_struct*)malloc(sizeof(struct cmd_struct));
-	command->cmd = (char*)malloc(sizeof(char) * 5); 
-	command->args[0] = (char*)malloc(sizeof(char) * 100);
+	command->cmd = (char*)malloc(sizeof(char) * FIND_LEN);
+	command->args[0] = (char*)malloc(sizeof(char) * SURNAME_LEN);
 
 	for(i = 1; i < 6; i++) 
 		command->args[i] = (int*)malloc(sizeof(int));
@@ -139,7 +139,7 @@ struct cmd_struct* create_cmd_struct_book(char* input, struct table* list) {
 	/* Allocazione memoria per la cmd_struct */
 	
 	struct cmd_struct* command = (struct cmd_struct*)malloc(sizeof(struct cmd_struct));
-	command->cmd = (char*)malloc(sizeof(char) * 5);
+	command->cmd = (char*)malloc(sizeof(char) * BOOK_LEN);
 	command->args[0] = (int*)malloc(sizeof(int));
 	
 	for(i = 1; i < 6; i++)
@@ -172,8 +172,8 @@ struct cmd_struct* create_cmd_struct_login(char* input) {
 	/* Allocazione memoria per la cmd_struct */
 	
 	struct cmd_struct* command = (struct cmd_struct*)malloc(sizeof(struct cmd_struct));
-	command->cmd = (char*)malloc(sizeof(char) * 6); //Usare CONST DA COMMON_HEADER
-	command->args[0] = (char*)malloc(sizeof(char) * 10);
+	command->cmd = (char*)malloc(sizeof(char) * LOGIN_LEN);
+	command->args[0] = (char*)malloc(sizeof(char) * BOOKING_CODE_LEN);
 	
 	for(i = 1; i < 6; i++)
 		command->args[i] = NULL;
@@ -270,7 +270,7 @@ struct cmd_struct* create_cmd_struct_ready(char* input) {
 	/* Allocazione memoria per la cmd_struct */
 	
 	struct cmd_struct* command = (struct cmd_struct*)malloc(sizeof(struct cmd_struct));
-	command->cmd = (char*)malloc(sizeof(char) * 6); // Usare CONST
+	command->cmd = (char*)malloc(sizeof(char) * READY_LEN);
 	command->args[0] = (char*)malloc(sizeof(char) * COMANDA_COUNT_LEN);
 	command->args[1] = (char*)malloc(sizeof(char) * TABLE_LEN);
 

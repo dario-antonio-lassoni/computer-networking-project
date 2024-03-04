@@ -19,8 +19,6 @@
 #include "libs/common_utils.h"
 #include "libs/database.h"
 
-#define INPUT_SIZE 512
-
 void print_command_list() {	
 	printf("\e[1;1H\e[2J");
 	printf("Comandi disponibili:\n");

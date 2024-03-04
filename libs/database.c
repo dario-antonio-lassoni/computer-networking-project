@@ -176,9 +176,9 @@ int count_elements_in_table_list(struct table* list) {
 
 char* create_booking_code(char* table, int day, int month, int year, int hour) {
 
-	char* booking_code = (char*)malloc(sizeof(char) * 10); 
+	char* booking_code = (char*)malloc(sizeof(char) * BOOKING_CODE_LEN); 
 	
-	memset(booking_code, 0, 10);
+	memset(booking_code, 0, BOOKING_CODE_LEN);
 	sprintf(booking_code, "%s%d%d%d%d", table, day, month, year, hour);
 
 	/* I codici di prenotazione sono univoci per tavolo + timeslot
@@ -393,8 +393,8 @@ int save_booking(struct cmd_struct* book_cmd, struct cmd_struct* find_cmd, struc
 	/* Creo la struttura del risultato che conterrà il codice prenotazione.
 	   Formato: <BOOKING_CODE>_<TAVOLO>_<SALA> */	
 
-	code_with_result = (char*)malloc(sizeof(char) * 60);
-	memset(code_with_result, 0, 60);
+	code_with_result = (char*)malloc(sizeof(char) * GENERIC_DATA_LEN);
+	memset(code_with_result, 0, GENERIC_DATA_LEN);
 	sprintf(code_with_result, "Codice prenotazione: %s, Tavolo: %s, Sala: %s", *code, curr->table, curr->room);		
 	*code = code_with_result;	
 	set_LOG_INFO();
