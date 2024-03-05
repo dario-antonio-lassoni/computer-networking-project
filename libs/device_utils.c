@@ -66,7 +66,6 @@ struct device* create_device(int fd, int port, enum device_type type) {
 	dev->booking = NULL;
 	dev->find_cmd = NULL;
 	dev->comande = NULL;
-	dev->dishes_ordered = NULL;
 	dev->next = NULL;
 	
 	return dev;
@@ -117,7 +116,6 @@ int add_device(struct device** head, struct device* device) {
 			(*head)->booking = device->booking;
 			(*head)->find_cmd = device->find_cmd;
 			(*head)->comande = device->comande;
-			(*head)->dishes_ordered = device->dishes_ordered;
 			(*head)->next = NULL;
 		} else {
 			LOG_ERROR("Errore durante l'aggiunta del descrittore device alla lista dei device collegati.");
