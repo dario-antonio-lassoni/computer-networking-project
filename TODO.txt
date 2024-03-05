@@ -1,13 +1,11 @@
 CMD VALGRIND:
 valgrind -s --leak-check=full --show-leak-kinds=all --track-origins=yes ./cli 123
-- Check se dished_ordered in device si può eliminare!!
+
 - ELIMINARE opzione -g da makefile!!!!!!!
 - Pulire codice dove possibile (commenti ecc)
 
 - check che un td con un codice prenotazione non sia già collegato (non possonoe sserci 2 td con la stessa prenotazione)
-
 - Incrementare su booking e table la lunghezza di table da 3 a 4 char (così da poter avere tavoli formati da 3 caratteri, T10, T11 ecc...)	
-
 - Valutare se  inserire un check quando diversi client fanno richiesta della book sulla stessa data e restano contemporaneamente nello stato pending (fatta la find ma non ancora fatta la book)
 	ciò porterebbe alla possibilità di diversi client di prenotare per lo stesso timeslot lo stesso tavolo, perché non viene fatto un check
 
