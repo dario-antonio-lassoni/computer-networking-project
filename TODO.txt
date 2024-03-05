@@ -1,6 +1,6 @@
 CMD VALGRIND:
 valgrind -s --leak-check=full --show-leak-kinds=all --track-origins=yes ./cli 123
-
+- Check se dished_ordered in device si può eliminare!!
 - ELIMINARE opzione -g da makefile!!!!!!!
 - Pulire codice dove possibile (commenti ecc)
 

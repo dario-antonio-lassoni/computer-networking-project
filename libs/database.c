@@ -74,9 +74,9 @@ void print_dish_list(struct dish* list) {
 	}
 }
 
-void print_all_orders(struct comanda* list) {
+void print_all_orders(struct order* list) {
 	
-	struct comanda* curr = list;
+	struct order* curr = list;
 
 	while(curr != NULL) {
 		printf("%s %s ", curr->com_count, curr->table);
@@ -97,9 +97,9 @@ void print_all_orders(struct comanda* list) {
 
 }
 
-void print_orders_by_state(struct comanda* list, char state) {
+void print_orders_by_state(struct order* list, char state) {
 	
-	struct comanda* curr = list;
+	struct order* curr = list;
 	char* curr_table = "\0";
 	char* curr_com_count = "\0";
 
@@ -123,9 +123,9 @@ void print_orders_by_state(struct comanda* list, char state) {
 	}
 }
 
-void print_orders_by_table(struct comanda* list, char* table) {
+void print_orders_by_table(struct order* list, char* table) {
 
-	struct comanda* curr = list;
+	struct order* curr = list;
 
 	while(curr != NULL) {
 		if(strcmp(curr->table, table) == 0) {
@@ -148,7 +148,7 @@ void print_orders_by_table(struct comanda* list, char* table) {
 
 }
 
-void print_taken_order(struct comanda* order) {
+void print_taken_order(struct order* order) {
 
 	printf("%s %s\n", order->com_count, order->table);
 	print_dish_list(order->dish_list);
@@ -616,9 +616,9 @@ void add_to_table_list(struct table** list, struct table* table) {
 
 }
 
-void add_to_orders_list(struct comanda** list, struct comanda* comanda) {
+void add_to_orders_list(struct order** list, struct order* comanda) {
 	
-	struct comanda* curr;
+	struct order* curr;
 
 	/* Inserisco la comanda in testa se è la prima in lista */
 	if(*list == NULL) {
@@ -636,9 +636,9 @@ void add_to_orders_list(struct comanda** list, struct comanda* comanda) {
 	curr->next = comanda;
 }
 
-void add_to_orders_list_with_increment(struct comanda** list, struct comanda* comanda) {
+void add_to_orders_list_with_increment(struct order** list, struct order* comanda) {
 	
-	struct comanda* curr;
+	struct order* curr;
 	int i;
 	
  	/* Init del contatore delle comande */	
@@ -670,9 +670,9 @@ void add_to_orders_list_with_increment(struct comanda** list, struct comanda* co
 	curr->next = comanda;
 }
 
-int delete_from_orders_list(struct comanda** list, char* com_count, char* table) {
+int delete_from_orders_list(struct order** list, char* com_count, char* table) {
 
-	struct comanda *prec, *curr;
+	struct order *prec, *curr;
 
 	if(*list == NULL)
 		return -1; // Se la lista da cui si vuole tentare la rimozione della comanda è vuota
@@ -707,21 +707,21 @@ int delete_from_orders_list(struct comanda** list, char* com_count, char* table)
 }
 
 /* Restituisce la comanda meno recente ancora in attesa */
-struct comanda* get_oldest_order_in_pending(struct client_device* list) {
+struct order* get_oldest_order_in_pending(struct device* list) {
 
-	struct client_device* curr_dev;
-	struct comanda *curr_order, *oldest_order;
+	struct device* curr_dev;
+	struct order *curr_order, *oldest_order;
 
 	curr_dev = list;
 	curr_order = NULL;
 	oldest_order = NULL;
 
-	/* Avanzo al primo client TD */
+	/* Avanzo al primo TD */
 	while(curr_dev != NULL && curr_dev->type != TD) {
 		
 		curr_dev = curr_dev->next;
 		
-		if(curr_dev == NULL) { // Se non è stato trovato un client TD
+		if(curr_dev == NULL) { // Se non è stato trovato un TD
 			LOG_WARN("Nessuna Table Device trovato");
 			return NULL;
 		}
@@ -752,9 +752,9 @@ struct comanda* get_oldest_order_in_pending(struct client_device* list) {
 	return oldest_order;
 }
 
-struct comanda* find_order_in_orders_list(struct comanda* list, char* com_count, char* table) {
+struct order* find_order_in_orders_list(struct order* list, char* com_count, char* table) {
 	
-	struct comanda* curr;
+	struct order* curr;
 
 	if(list == NULL)
 		return NULL;
@@ -814,10 +814,10 @@ int get_dish_price(char* identifier) {
 }
 
 /* Recupera tutti i piatti dalla lista delle comande creando una lista unica di piatti */
-struct dish* get_all_dishes_by_order(struct comanda* comanda) {
+struct dish* get_all_dishes_by_order(struct order* comanda) {
 	
 	struct dish *dish_list, *curr_dish;
-	struct comanda* curr_com;
+	struct order* curr_com;
 	int price;
 	
 	dish_list = NULL;

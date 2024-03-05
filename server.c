@@ -20,17 +20,17 @@
 int main(int argc, char* argv[]) {
 	int ret, newfd, listener, i, addrlen, server_port, fdmax;
 	fd_set master, read_fds;
-	struct client_device *received_client, *client_list, *temp_client;
+	struct device *received_device, *device_list, *temp_device;
 	struct cmd_struct* command;	
-	struct sockaddr_in server_addr, client_addr;
+	struct sockaddr_in server_addr, device_addr;
 	char *buffer, *input;
 	struct table *table_list, *temp_table;
 	struct dish *dish_list, *temp_dish;
-	struct comanda* temp_order;
+	struct order* temp_order;
 
-	received_client = NULL;
-	client_list = NULL;
-	temp_client = NULL;
+	received_device = NULL;
+	device_list = NULL;
+	temp_device = NULL;
 	command = NULL;
 	buffer = NULL;
 	input = NULL;
@@ -107,15 +107,15 @@ int main(int argc, char* argv[]) {
 					
 					if(strcmp(input, "stop\n") == 0) {
 
-						if(check_shutdown(client_list)) {
+						if(check_shutdown(device_list)) {
 							LOG_INFO("Invio richiesta di disconnessione ai Table Device e Kitchen Device");
 							
-							temp_client = client_list;
+							temp_device = device_list;
 						
-							while(temp_client != NULL) {
+							while(temp_device != NULL) {
 									
 								write_text_to_buffer((void*)&buffer, "SHUTDOWN");
-								ret = send_data(temp_client->fd, buffer);
+								ret = send_data(temp_device->fd, buffer);
 											      
 								if(ret < 0) {
 									LOG_ERROR("Errore di comunicazione con il device in fase di spegnimento! Chiudo la comunicazione.");	
@@ -123,7 +123,7 @@ int main(int argc, char* argv[]) {
 									FD_CLR(i, &master);
 								}
 
-								temp_client = temp_client->next;
+								temp_device = temp_device->next;
 							}		
 
 							LOG_INFO("Arresto del server in corso...");
@@ -144,39 +144,39 @@ int main(int argc, char* argv[]) {
 	
 					} else if(strncmp(input, "stat", 4) == 0) {
 						
-						temp_client = client_list;
+						temp_device = device_list;
 
 						buffer = (char*)malloc(sizeof(char) * TABLE_LEN);
 						
 						/* stat: Restituisce lo stato di tutte le comande giornaliere */
 						if(strcmp(input, "stat\n") == 0) {
-							while(temp_client != NULL) {
-								print_all_orders(temp_client->comande);
-								temp_client = temp_client->next;
+							while(temp_device != NULL) {
+								print_all_orders(temp_device->comande);
+								temp_device = temp_device->next;
 							}
 						} 	
 						/* stat <status>: Restituisce tutte le comande in corso con lo stato indicato */
 						else if(strcmp(input, "stat a\n") == 0) { // stato 'in attesa'
-							while(temp_client != NULL) {
-								print_orders_by_state(temp_client->comande, 'a');
-								temp_client = temp_client->next;
+							while(temp_device != NULL) {
+								print_orders_by_state(temp_device->comande, 'a');
+								temp_device = temp_device->next;
 							}
 						} else if(strcmp(input, "stat p\n") == 0) {	
-							while(temp_client != NULL) {
-								print_orders_by_state(temp_client->comande, 'p');
-								temp_client = temp_client->next;
+							while(temp_device != NULL) {
+								print_orders_by_state(temp_device->comande, 'p');
+								temp_device = temp_device->next;
 							}
 						} else if(strcmp(input, "stat s\n") == 0) {	
-							while(temp_client != NULL) {
-								print_orders_by_state(temp_client->comande, 's');
-								temp_client = temp_client->next;
+							while(temp_device != NULL) {
+								print_orders_by_state(temp_device->comande, 's');
+								temp_device = temp_device->next;
 							}
 						}
 						/* stat <table>: Restituisce tutte le comande relative al tavolo table */
 						else if(sscanf(input, "stat %s", buffer) == 1) {
-							while(temp_client != NULL) {
-								print_orders_by_table(temp_client->comande, buffer);
-								temp_client = temp_client->next;
+							while(temp_device != NULL) {
+								print_orders_by_table(temp_device->comande, buffer);
+								temp_device = temp_device->next;
 							}
 						}
 
@@ -184,75 +184,75 @@ int main(int argc, char* argv[]) {
 					}
 				} else if(i == listener) {
 
-					LOG_INFO("Nuovo client rilevato, connessione in corso...");
-					addrlen = sizeof(client_addr);
-					newfd = accept(listener, (struct sockaddr*)&client_addr, (socklen_t*)&addrlen);	
+					LOG_INFO("Nuovo device rilevato, connessione in corso...");
+					addrlen = sizeof(device_addr);
+					newfd = accept(listener, (struct sockaddr*)&device_addr, (socklen_t*)&addrlen);	
 					FD_SET(newfd, &master);
 					LOG_INFO("Connessione effettuata con successo.");
 					if(newfd > fdmax)
 						fdmax = newfd;
-				} else { /* Se viene rilevata una nuova richiesta da un client (tramite una send) */
-					/* Inserisco il comando ricevuto dal client nel buffer */
+				} else { /* Se viene rilevata una nuova richiesta da un device (tramite una send) */
+					/* Inserisco il comando ricevuto dal device nel buffer */
 					ret = receive_data(i, (void*)&buffer);
 				
 					if(ret == 0) {
 
-						received_client = find_client_device_by_fd(&client_list, i);
+						received_device = find_device_by_fd(&device_list, i);
 						set_LOG_INFO();
-						printf("Chiusura client comunicante su porta %d rilevata\n", (*received_client).port); /* DIRE DI QUALE CLIENT SI TRATTA */	
+						printf("Chiusura device comunicante su porta %d rilevata\n", (*received_device).port); /* DIRE DI QUALE CLIENT SI TRATTA */	
 						fflush(stdout);
-						delete_client_device(&client_list, i); // La free del received_client viene fatta dalla delete
+						delete_device(&device_list, i); // La free del received_device viene fatta dalla delete
 						close(i);
 						FD_CLR(i, &master);
 
-					} else if (strcmp(buffer, "RECOGNIZE_ME") == 0) { /* Se il client si è appena collegato e chiede di essere riconosciuto */
+					} else if (strcmp(buffer, "RECOGNIZE_ME") == 0) { /* Se il device si è appena collegato e chiede di essere riconosciuto */
 				
-						LOG_INFO("Riconoscimento nuovo client in corso...");	
+						LOG_INFO("Riconoscimento nuovo device in corso...");	
 						
 						/* Invio conferma ricezione comando per l'inizio della fase di riconoscimento */
 						write_text_to_buffer((void*)&buffer, "START_RECOGNIZE");
 						ret = send_data(i, buffer);
 											      
 						if(ret < 0) {
-							LOG_ERROR("Errore in fase di riconoscimento del client! Chiudo la comunicazione. (STEP 1)");	
+							LOG_ERROR("Errore in fase di riconoscimento del device! Chiudo la comunicazione. (STEP 1)");	
 							close(i);
 							FD_CLR(i, &master);
 							continue;
 						}
 
 						ret = receive_data(i, (void*)&buffer);
-						LOG_INFO("Ho ricevuto il client_device!");
+						LOG_INFO("Ho ricevuto il device!");
 
 						if(ret < 0) {
 							perror("Errore:\n");
-							LOG_ERROR("Errore in fase di riconoscimento del client! Chiudo la comunicazione. (STEP 2)");
+							LOG_ERROR("Errore in fase di riconoscimento del device! Chiudo la comunicazione. (STEP 2)");
 							close(i);
 							FD_CLR(i, &master);
 							continue;
 						}
 						
-						received_client = create_client_device(i, 0, 0);
-						/* Popolo la struttura received_client con le informazioni del nuovo client */	
-						sscanf(buffer, "%d %u", &(received_client->port), &(received_client->type));
+						received_device = create_device(i, 0, 0);
+						/* Popolo la struttura received_device con le informazioni del nuovo device */	
+						sscanf(buffer, "%d %u", &(received_device->port), &(received_device->type));
 
-						/* Inserisco nella lista dei client collegati il nuovo client */
-						ret = add_client_device(&client_list, received_client);
+						/* Inserisco nella lista dei device collegati il nuovo device */
+						ret = add_device(&device_list, received_device);
 						if(ret <= 0) {
 							/* Se si è verificato un errore durante l'aggiunta alla lista dei device collegati */
-							LOG_ERROR("Errore in fase di riconoscimento del client! Chiudo la comunicazione. (STEP 3)");
+							LOG_ERROR("Errore in fase di riconoscimento del device! Chiudo la comunicazione. (STEP 3)");
 							close(i);
 							FD_CLR(i, &master);
 							continue;
 						}
 
-						/* Invio ACK al client per segnalare il completamento della fase di riconoscimento */
-						LOG_INFO("Invio ACK per segnalare la fine della fase di riconoscimento al client");
+						/* Invio ACK al device per segnalare il completamento della fase di riconoscimento */
+						LOG_INFO("Invio ACK per segnalare la fine della fase di riconoscimento al device");
 						write_text_to_buffer((void*)&buffer, "END_RECOGNIZE\0");
 						
 						ret = send_data(i, buffer);
 						if(ret < 0) {
-							LOG_ERROR("Errore in fase di riconoscimento del client! Chiudo la comunicazione. (STEP 4)");	
-							delete_client_device(&client_list, i);	
+							LOG_ERROR("Errore in fase di riconoscimento del device! Chiudo la comunicazione. (STEP 4)");	
+							delete_device(&device_list, i);	
 							close(i);
 							FD_CLR(i, &master);	
 							continue;
@@ -260,15 +260,15 @@ int main(int argc, char* argv[]) {
 
 					} else { /* Logiche per i comandi ricevuti */
 
-						/* Riconoscimento del client attraverso il type */	
-						received_client = find_client_device_by_fd(&client_list, i);
+						/* Riconoscimento del device attraverso il type */	
+						received_device = find_device_by_fd(&device_list, i);
 
-						if(received_client == NULL) { // Il client non è tra quelli che hanno chiesto di essere riconosciuti
+						if(received_device == NULL) { // Il device non è tra quelli che hanno chiesto di essere riconosciuti
 							
-							LOG_ERROR("Errore: un client ha tentato di inviare un comando prima di essere riconosciuto");
+							LOG_ERROR("Errore: un device ha tentato di inviare un comando prima di essere riconosciuto");
 							continue;	
 
-						} else if(received_client->type == CL) {
+						} else if(received_device->type == CL) {
 						
 							LOG_INFO("Il comando è stato ricevuto da un Client");
 						
@@ -295,7 +295,7 @@ int main(int argc, char* argv[]) {
 									if(ret < 0) {
 										set_LOG_ERROR();
 										perror("Errore durante l'invio dei tavoli prenotabili. Chiudo la comunicazione");
-										delete_client_device(&client_list, i);
+										delete_device(&device_list, i);
 										close(i);
 										FD_CLR(i, &master);
 									}
@@ -312,7 +312,7 @@ int main(int argc, char* argv[]) {
 								
 									if(ret < 0) {
 										LOG_ERROR("Errore durante l'invio dei tavoli prenotabili. Chiudo la comunicazione");
-										delete_client_device(&client_list, i);
+										delete_device(&device_list, i);
 										close(i);
 										FD_CLR(i, &master);
 										break;
@@ -327,7 +327,7 @@ int main(int argc, char* argv[]) {
 										if(ret < 0) {
 											set_LOG_ERROR();
 											perror("Errore durante l'invio dei tavoli prenotabili. Chiudo la comunicazione");
-											delete_client_device(&client_list, i);
+											delete_device(&device_list, i);
 											close(i);
 											FD_CLR(i, &master);
 											break;
@@ -337,33 +337,33 @@ int main(int argc, char* argv[]) {
 								
 								LOG_INFO("Invio dei tavoli prenotabili completato.");
 
-								/* Salvataggio della lista dei tavoli prenotabili per questo client,
+								/* Salvataggio della lista dei tavoli prenotabili per questo device,
 								 * per poterla poi riutilizzare alla ricezione del comando 'book' */
 							
-								received_client->bookable_table = table_list;
+								received_device->bookable_table = table_list;
 								table_list = NULL;
 
 								/* Salvataggio del command find, in particolare dei parametri passati,
 								 * per poterli poi riutilizzare alla ricezione del comando 'book' */
 								
-								received_client->find_cmd = command;
+								received_device->find_cmd = command;
 
 							} else if(strncmp(buffer, "book", 4) == 0) { // Comando 'book'
 								
-								command = create_cmd_struct_book(buffer, received_client->bookable_table);
+								command = create_cmd_struct_book(buffer, received_device->bookable_table);
 								
 								/* Aggiunta della prenotazione */ 
 								// save_booking ritorna il codice di prenotazione (char*) se va tutto bene altrimenti BOOK_KO
-								ret = save_booking(command, received_client->find_cmd, received_client->bookable_table, &buffer);
+								ret = save_booking(command, received_device->find_cmd, received_device->bookable_table, &buffer);
 								// Scrittura su buffer con write_text_to_buffer dentro la save_booking
 								
 								if(ret == -1) {
-									write_text_to_buffer((void*)&buffer, "BOOK_KO"); // Segnalo che ci sono stati problemi al client
+									write_text_to_buffer((void*)&buffer, "BOOK_KO"); // Segnalo che ci sono stati problemi al device
 									ret = send_data(i, (void*)buffer); 
 									
 									if(ret < 0) {
 										LOG_ERROR("Errore in fase di prenotazione. Chiudo la comunicazione");
-										delete_client_device(&client_list, i);
+										delete_device(&device_list, i);
 										close(i);
 										FD_CLR(i, &master);
 										continue;
@@ -377,17 +377,17 @@ int main(int argc, char* argv[]) {
 								if(ret < 0) {
 									set_LOG_ERROR();
 									perror("Errore durante l'invio di conferma prenotazione. Chiudo la comunicazione");
-									delete_client_device(&client_list, i);
+									delete_device(&device_list, i);
 									close(i);
 									FD_CLR(i, &master);
 									continue;
 								}
 								
-								free_table_list(&received_client->bookable_table);
+								free_table_list(&received_device->bookable_table);
 								LOG_INFO("Prenotazione effettuata");
 							}
 
-						} else if(received_client->type == TD) {
+						} else if(received_device->type == TD) {
 							LOG_INFO("Il comando è stato ricevuto da un Table Device");	
 						
 							/* Riconoscimento del comando */
@@ -395,7 +395,7 @@ int main(int argc, char* argv[]) {
 								
 								command = create_cmd_struct_login(buffer);
 								
-								/* Verifica il booking code passato dal client.
+								/* Verifica il booking code passato dal device.
 								 * Se il booking code esiste allora il buffer verrà valorizzato con il messaggio
 								 * BOOKING_CODE_IS_VALID altrimenti BOOKING_CODE_IS_NOT_VALID*/
 
@@ -403,11 +403,11 @@ int main(int argc, char* argv[]) {
 										(char*)command->args[0], // args[0]: Contiene il booking code nella command 'login'
 										(void*)&buffer);
 								
-								received_client->booking = get_booking_from_code((char*)command->args[0]); // args[0]: Contiene il booking code nella command 'login'
+								received_device->booking = get_booking_from_code((char*)command->args[0]); // args[0]: Contiene il booking code nella command 'login'
 								
 								if(strcmp(buffer, "BOOKING_CODE_IS_VALID") == 0) {	
 									set_LOG_INFO();
-									printf("Si è collegato il TD associato alla prenotazione %s, tavolo: %s\n", (char*)command->args[0], (received_client->booking)->table);
+									printf("Si è collegato il TD associato alla prenotazione %s, tavolo: %s\n", (char*)command->args[0], (received_device->booking)->table);
 									fflush(stdout);
 								}
 
@@ -417,7 +417,7 @@ int main(int argc, char* argv[]) {
 									
 								if(ret < 0) {
 									LOG_ERROR("Errore durante l'invio della response per la verifica del codice prenotazione");
-									delete_client_device(&client_list, i);
+									delete_device(&device_list, i);
 									close(i);
 									FD_CLR(i, &master);
 									continue;
@@ -440,7 +440,7 @@ int main(int argc, char* argv[]) {
 									
 									if(ret < 0) {
 										LOG_ERROR("Errore durante l'invio dei piatti del menu. Chiudo la comunicazione");
-										delete_client_device(&client_list, i);
+										delete_device(&device_list, i);
 										close(i);
 										FD_CLR(i, &master);
 										break;
@@ -455,7 +455,7 @@ int main(int argc, char* argv[]) {
 										if(ret < 0) {
 											set_LOG_ERROR();
 											perror("Errore durante l'invio dei piatti del menu. Chiudo la comunicazione");
-											delete_client_device(&client_list, i);
+											delete_device(&device_list, i);
 											close(i);
 											FD_CLR(i, &master);
 											break;
@@ -469,13 +469,13 @@ int main(int argc, char* argv[]) {
 
 							} else if(strncmp(buffer, "comanda", 7) == 0) { // Comando 'comanda'
 								
-								command = create_cmd_struct_comanda(buffer, (received_client->booking)->table, received_client->fd);
+								command = create_cmd_struct_comanda(buffer, (received_device->booking)->table, received_device->fd);
 							
 								/* Setta lo stato della comanda 'in attesa' */
-								((struct comanda*)command->args[0])->state = 'a';
+								((struct order*)command->args[0])->state = 'a';
 
 								/* Check che la comanda contenga solo piatti che fanno parte del menu del giorno */
-								temp_dish = ((struct comanda*)command->args[0])->dish_list;
+								temp_dish = ((struct order*)command->args[0])->dish_list;
 								ret = check_dishes(temp_dish);
 								
 								if(ret < 0) {
@@ -487,7 +487,7 @@ int main(int argc, char* argv[]) {
 									if(ret < 0) {
 										set_LOG_ERROR();
 										perror("Errore durante la comunicazione con il TD. Chiudo la comunicazione");
-										delete_client_device(&client_list, i);
+										delete_device(&device_list, i);
 										close(i);
 										FD_CLR(i, &master);
 									}
@@ -497,26 +497,26 @@ int main(int argc, char* argv[]) {
 
 								/* Aggiunta della comanda nella lista delle comande */
 								add_to_orders_list_with_increment( // Si occupa anche di incremenare il contatore delle comande!!!
-										&received_client->comande, // Lista delle comande relative al Table Device che ha inviato la comanda
-										(struct comanda*)command->args[0] // Nuova comanda da aggiungere
+										&received_device->comande, // Lista delle comande relative al Table Device che ha inviato la comanda
+										(struct order*)command->args[0] // Nuova comanda da aggiungere
 										);
 
 
 								/* Invio notifica ai Kitchen Device per segnalare l'arrivo della comanda */
 								
-								send_notify_to_all_kd(client_list);
+								send_notify_to_all_kd(device_list);
 
 								/* Invio segnalazione al TD per comanda ricevuta */
 								free_mem((void*)&buffer);
 								buffer = (char*)malloc(sizeof(char) * GENERIC_DATA_LEN);	
 								
-								sprintf(buffer, "COMANDA RICEVUTA (%s)", (char*)((struct comanda*)command->args[0])->com_count);
+								sprintf(buffer, "COMANDA RICEVUTA (%s)", (char*)((struct order*)command->args[0])->com_count);
 								ret = send_data(i, (void*)buffer);
 								
 								if(ret < 0) {
 									set_LOG_ERROR();
 									perror("Errore durante l'invio segnalazione per comanda ricevuta. Chiudo la comunicazione");
-									delete_client_device(&client_list, i);
+									delete_device(&device_list, i);
 									close(i);
 									FD_CLR(i, &master);
 									continue;
@@ -524,7 +524,7 @@ int main(int argc, char* argv[]) {
 
 							} else if(strncmp(buffer, "conto", 5) == 0) { // Comando 'conto'
 								
-								dish_list = get_all_dishes_by_order(received_client->comande);
+								dish_list = get_all_dishes_by_order(received_device->comande);
 								temp_dish = dish_list;
 
 								if(dish_list == NULL) { // Se non esistono comande 
@@ -576,7 +576,7 @@ int main(int argc, char* argv[]) {
 
 							}
 
-						} else if(received_client->type == KD) {	
+						} else if(received_device->type == KD) {	
 
 							LOG_INFO("Il comando è stato ricevuto da un Kitchen Device");
 
@@ -585,7 +585,7 @@ int main(int argc, char* argv[]) {
 						
 								/* Recupero della comanda meno recente ancora in stato 'in attesa' */
 								
-								temp_order = get_oldest_order_in_pending(client_list);
+								temp_order = get_oldest_order_in_pending(device_list);
 
 								if(temp_order == NULL) {
 									LOG_WARN("NO ORDER!");
@@ -608,7 +608,7 @@ int main(int argc, char* argv[]) {
 								
 								if(ret < 0) {
 									LOG_ERROR("Errore durante l'invio dei tavoli prenotabili. Chiudo la comunicazione");
-									delete_client_device(&client_list, i);
+									delete_device(&device_list, i);
 									close(i);
 									FD_CLR(i, &master);
 									break;
@@ -628,7 +628,7 @@ int main(int argc, char* argv[]) {
 									
 									if(ret < 0) {
 										LOG_ERROR("Errore durante l'invio dei piatti della comanda. Chiudo la comunicazione");
-										delete_client_device(&client_list, i);
+										delete_device(&device_list, i);
 										close(i);
 										FD_CLR(i, &master);
 										break;
@@ -643,7 +643,7 @@ int main(int argc, char* argv[]) {
 										if(ret < 0) {
 											set_LOG_ERROR();
 											perror("Errore durante l'invio dei piatti della comanda. Chiudo la comunicazione");
-											delete_client_device(&client_list, i);
+											delete_device(&device_list, i);
 											close(i);
 											FD_CLR(i, &master);
 											break;
@@ -668,7 +668,7 @@ int main(int argc, char* argv[]) {
 								
 								if(ret < 0) {
 									LOG_ERROR("Errore durante l'invio dei piatti della comanda. Chiudo la comunicazione");
-									delete_client_device(&client_list, i);
+									delete_device(&device_list, i);
 									close(i);
 									FD_CLR(i, &master);
 									break;
@@ -687,11 +687,11 @@ int main(int argc, char* argv[]) {
 
 								/* Ricerca della comanda */
 								
-								temp_client = client_list;
+								temp_device = device_list;
 
-								while(temp_client != NULL) {
+								while(temp_device != NULL) {
 									
-									temp_order = find_order_in_orders_list(temp_client->comande,
+									temp_order = find_order_in_orders_list(temp_device->comande,
 											(char*)command->args[0],  // com_count
 											(char*)command->args[1]); // table
 
@@ -699,7 +699,7 @@ int main(int argc, char* argv[]) {
 										break;
 									}
 
-									temp_client = temp_client->next;
+									temp_device = temp_device->next;
 								}
 
 								if(temp_order == NULL) {
@@ -710,7 +710,7 @@ int main(int argc, char* argv[]) {
 									
 									if(ret < 0) {
 										LOG_ERROR("Errore durante l'invio del messaggio");
-										delete_client_device(&client_list, i);
+										delete_device(&device_list, i);
 										close(i);
 										FD_CLR(i, &master);
 										break;
@@ -728,7 +728,7 @@ int main(int argc, char* argv[]) {
 									
 								if(ret < 0) {
 									LOG_ERROR("Errore durante l'invio del messaggio");
-									delete_client_device(&client_list, i);
+									delete_device(&device_list, i);
 									close(i);
 									FD_CLR(i, &master);
 									break;
@@ -752,7 +752,7 @@ int main(int argc, char* argv[]) {
 								
 								if(ret < 0) {
 									LOG_ERROR("Errore durante l'invio dei piatti della comanda. Chiudo la comunicazione");
-									delete_client_device(&client_list, i);
+									delete_device(&device_list, i);
 									close(i);
 									FD_CLR(i, &master);
 									break;

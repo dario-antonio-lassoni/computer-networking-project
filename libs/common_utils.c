@@ -199,7 +199,7 @@ struct cmd_struct* create_cmd_struct_comanda(char* input, char* table, int sd_td
 	int i, input_is_valid;
 	char* token, *buffer;
 	struct dish* current_dish;
-	struct comanda* comanda;
+	struct order* comanda;
 	struct cmd_struct* command;
 	time_t now; // Timestamp attuale
 
@@ -211,10 +211,10 @@ struct cmd_struct* create_cmd_struct_comanda(char* input, char* table, int sd_td
 
 	/* Allocazione memoria per la cmd_struct */
 	command = (struct cmd_struct*)malloc(sizeof(struct cmd_struct));
-	command->args[0] = (struct comanda*)malloc(sizeof(struct comanda));
-	comanda = (struct comanda*)command->args[0];
+	command->args[0] = (struct order*)malloc(sizeof(struct order));
+	comanda = (struct order*)command->args[0];
 	current_dish = (struct dish*)malloc(sizeof(struct dish));
-	((struct comanda*)command->args[0])->dish_list = current_dish;
+	((struct order*)command->args[0])->dish_list = current_dish;
 
 	for(i = 1; i < 6; i++)
 		command->args[i] = NULL;
@@ -229,8 +229,7 @@ struct cmd_struct* create_cmd_struct_comanda(char* input, char* table, int sd_td
 	comanda->timestamp = now; // Set dell'istante in cui è arrivata la comanda al server
 	comanda->sd = sd_td; // Socket Descriptor del Table Device (lato server) 
 		
-	((struct comanda*)command->args[0])->next = NULL;	
-	//comanda->next = NULL;
+	((struct order*)command->args[0])->next = NULL;	
 
 	token = strtok(buffer, " ");
 	token = strtok(NULL, " "); // Indico alla funzione strtok di saltare direttamente al primo token (" ") 
@@ -353,9 +352,9 @@ int receive_data(int sd, void** buf) {
 }
 
 
-void send_notify_to_all_kd(struct client_device* list) {
+void send_notify_to_all_kd(struct device* list) {
 	
-	struct client_device* dev;
+	struct device* dev;
 	char* buffer;
 
 	if(list == NULL)

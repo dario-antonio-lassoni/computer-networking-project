@@ -10,11 +10,11 @@
 
 #include "common_utils.h"
 
-struct client_device* find_client_device_by_fd(struct client_device** head, int i);
-struct client_device* find_client_device_by_port(struct client_device** head, int i);
-struct client_device* create_client_device(int fd, int port, enum client_type type);
-int delete_client_device(struct client_device** head, int fd);
-int add_client_device(struct client_device** head, struct client_device* client);
-int check_shutdown(struct client_device* list);
+struct device* find_device_by_fd(struct device** head, int i);
+struct device* find_device_by_port(struct device** head, int i);
+struct device* create_device(int fd, int port, enum device_type type);
+int delete_device(struct device** head, int fd);
+int add_device(struct device** head, struct device* device);
+int check_shutdown(struct device* list);
 
 #endif

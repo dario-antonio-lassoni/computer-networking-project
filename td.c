@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
 	int ret, sd, i, fdmax;
 	fd_set master, read_fds;
 	struct sockaddr_in srv_addr;
-	struct client_device cli_dev;
+	struct device dev;
 	char *input, *buffer;
 	struct cmd_struct* command;
 	struct table *table_list, *temp_table;
@@ -68,10 +68,10 @@ int main(int argc, char* argv[]) {
 	srv_addr.sin_port = htons(4242);
 	inet_pton(AF_INET, "127.0.0.1", &srv_addr.sin_addr);
 	
-	/* Creazione della struttura client_device per la fase di riconoscimento */
-	cli_dev.port = atoi(argv[1]);
-	cli_dev.type = TD;
-	cli_dev.next = NULL;
+	/* Creazione della struttura device per la fase di riconoscimento */
+	dev.port = atoi(argv[1]);
+	dev.type = TD;
+	dev.next = NULL;
 	
 	/* Connessione */
 	ret = connect(sd, (struct sockaddr*)&srv_addr, sizeof(srv_addr));
@@ -110,8 +110,8 @@ int main(int argc, char* argv[]) {
 		exit(1);
 	}
 
-	/* Invio la tipologia del client al server per la fase di riconoscimento  */
-	sprintf(buffer, "%d %d", cli_dev.port, cli_dev.type);
+	/* Invio la tipologia del device al server per la fase di riconoscimento  */
+	sprintf(buffer, "%d %d", dev.port, dev.type);
 	ret = send_data(sd, buffer);
 	
 	if(ret < 0) {
@@ -217,7 +217,7 @@ int main(int argc, char* argv[]) {
 
 						temp_table = NULL;
 
-						printf("Chiusura client...\n");
+						printf("Chiusura device...\n");
 						exit(0);
 
 					} else if(strcmp(input, "help\n") == 0) {
@@ -386,7 +386,7 @@ int main(int argc, char* argv[]) {
 
 						temp_table = NULL;
 
-						printf("Chiusura client...\n");
+						printf("Chiusura device...\n");
 						exit(0);
 
 					} else { // Stampa della notifica

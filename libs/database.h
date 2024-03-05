@@ -35,14 +35,14 @@ struct dish {
 	struct dish* next;
 };
 
-struct comanda {
-	char table[TABLE_LEN];
+struct order { // Comanda
+	char table[TABLE_LEN]; // ID Tavolo
 	char com_count[COMANDA_COUNT_LEN]; // Numero della comanda relativa al tavolo
 	char state; // Stato ->  a:'in attesa', p:'in preparazione', s:'in servizio'
 	struct dish* dish_list; // Lista ordinazioni nella comanda
 	int sd; // socket descriptor del Table Device che ha inviato la comanda (lato server)
 	time_t timestamp; // Istante in cui è stato effettuato l'ordine dal Table Device	
-	struct comanda* next;
+	struct order* next;
 };
 
 /* BOOKING */
@@ -72,19 +72,19 @@ void add_to_dish_list(struct dish** list, struct dish* dish);
 void print_menu_dishes(struct dish* list);
 /* Controlla che la comanda contenga solo piatti presenti nel menu del giorno */
 int check_dishes(struct dish* list);
-struct dish* get_all_dishes_by_order(struct comanda* comanda);
+struct dish* get_all_dishes_by_order(struct order* comanda);
 char* get_total_cost_by_dish_list(struct dish* list);
 
 /* COMANDA */
-void add_to_orders_list(struct comanda** list, struct comanda* comanda);
+void add_to_orders_list(struct order** list, struct order* comanda);
 /* Prima di aggiungere in lista si occupa di incrementare il contatore della comanda */
-void add_to_orders_list_with_increment(struct comanda** list, struct comanda* comanda);
-int delete_from_orders_list(struct comanda** list, char* com_count, char* table);
-struct comanda* find_order_in_orders_list(struct comanda* list, char* com_count, char* table);
-void print_all_orders(struct comanda* list);
-void print_orders_by_state(struct comanda* list, char state);
-void print_orders_by_table(struct comanda* list, char* table);
-void print_taken_order(struct comanda* list); // Print specifica per Kitchen Device
-struct comanda* get_oldest_order_in_pending(struct client_device* list);
+void add_to_orders_list_with_increment(struct order** list, struct order* comanda);
+int delete_from_orders_list(struct order** list, char* com_count, char* table);
+struct order* find_order_in_orders_list(struct order* list, char* com_count, char* table);
+void print_all_orders(struct order* list);
+void print_orders_by_state(struct order* list, char state);
+void print_orders_by_table(struct order* list, char* table);
+void print_taken_order(struct order* list); // Print specifica per Kitchen Device
+struct order* get_oldest_order_in_pending(struct device* list);
 
 #endif
