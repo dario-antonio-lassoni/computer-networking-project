@@ -1,3 +1,10 @@
+/**
+ *
+ * Dario Antonio Lassoni
+ * Matricola: 565721
+ *
+ */
+
 #ifndef COMMON_HEADER_H
 #define COMMON_HEADER_H
 
@@ -7,7 +14,6 @@
 #include <stdint.h>
 #include <arpa/inet.h>
 #include "logger.h"
-
 
 #define BACKLOG_SIZE 10 /* Default backlog size del listener */
 #define INPUT_SIZE 512
@@ -34,8 +40,8 @@
 #define GENERIC_DATA_LEN 256
 
 struct cmd_struct {
-	char* cmd;
-	void* args[6];
+	char* cmd; // Contiene il comando
+	void* args[6]; // Contiene i parametri passati al comando
 };
 
 enum device_type { CL, TD, KD };
